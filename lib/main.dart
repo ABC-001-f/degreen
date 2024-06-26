@@ -1,12 +1,14 @@
 import 'package:degreen/pages/home.dart';
 import 'package:degreen/utils/settings_provider.dart';
+import 'package:degreen/utils/storage_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  await StorageHelper.init();
   runApp(const MyApp());
 }
 

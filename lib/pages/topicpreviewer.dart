@@ -4,11 +4,9 @@ import 'package:degreen/topics.dart';
 import 'package:degreen/utils/settings_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:provider/provider.dart';
 import 'package:translator/translator.dart';
-import 'package:popover/popover.dart';
 
 class Topicpreviewer extends StatefulWidget {
   final String topic;
@@ -742,8 +740,6 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
         }
       }
     }
-    print(selectiondata.length);
-    print(data.length);
     Widget markdownedit = SelectableText.rich(
       TextSpan(children: textspans),
       onSelectionChanged: (TextSelection selection, _) {
@@ -966,7 +962,6 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
       what:
           " give me the ${widget.descriptions[index]} of ${widget.topic} represent it in a matured way",
     );
-    print(answer);
     if (type != "reload") active = index + 1;
     if (!answer.contains("Error")) {
       var translated =
