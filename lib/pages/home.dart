@@ -1,3 +1,4 @@
+import 'package:degreen/pages/saved_items_page.dart';
 import 'package:degreen/pages/search.dart';
 import 'package:degreen/pages/settings.dart';
 import 'package:degreen/pages/topicpreviewer.dart';
@@ -87,10 +88,21 @@ class _HomePageState extends State<HomePage> {
           IconButton(
             onPressed: () {
               Navigator.of(context).push(MaterialPageRoute(
-                builder: (context) => const Settingspage(),
+                builder: (context) => const SavedItemsPage(),
               ));
             },
-            icon: const Icon(Icons.settings),
+            icon: const Icon(Icons.folder),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: IconButton(
+              onPressed: () {
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => const Settingspage(),
+                ));
+              },
+              icon: const Icon(Icons.settings),
+            ),
           ),
         ],
       ),
@@ -142,9 +154,12 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                     ),
-                    IconButton.filledTonal(
-                      onPressed: _toggleSortOrder,
-                      icon: const Icon(Icons.sort_by_alpha),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: IconButton.filledTonal(
+                        onPressed: _toggleSortOrder,
+                        icon: const Icon(Icons.sort_by_alpha),
+                      ),
                     )
                   ]
                 : const [SizedBox()],
@@ -212,7 +227,7 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 30),
+          padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [

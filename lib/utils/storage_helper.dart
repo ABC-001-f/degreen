@@ -1,65 +1,45 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'content.dart';
 
+
 class StorageHelper {
-  static const String boxName = 'contentBox';
+  static Box<Content>? _contentBox;
 
   static Future<void> init() async {
-    if (!kIsWeb) {
-      final appDocumentDir = await getApplicationDocumentsDirectory();
-      Hive.init(appDocumentDir.path);
-    } else {
-      await Hive.initFlutter();
-    }
+    await Hive.initFlutter();
     Hive.registerAdapter(ContentAdapter());
-    await Hive.openBox<Content>(boxName);
-  }
-
-  static Box<Content> getBox() => Hive.box<Content>(boxName);
-
-  static Future<void> addContent(Content content) async {
-    final box = getBox();
-    await box.add(content);
+    _contentBox = await Hive.openBox<Content>('contentBox');
   }
 
   static List<Content> getAllContent() {
-    final box = getBox();
-    return box.values.toList();
+    return _contentBox?.values.toList() ?? [];
   }
 
-  static Future<void> deleteContent(int index) async {
-    final box = getBox();
-    await box.deleteAt(index);
+  static void addContent(Content content) {
+    _contentBox?.add(content);
   }
 
-  static Future<void> saveContentToFile(Content content) async {
+  static void updateContent(int index, Content content) {
+    _contentBox?.putAt(index, content);
+  }
+
+  static void deleteContent(int index) {
+    _contentBox?.deleteAt(index);
+  }
+
+  static void saveContentToFile(Content content) async {
     final directory = await getApplicationDocumentsDirectory();
-    final file = File('${directory.path}/${content.datetime.toIso8601String()}.json');
-    await file.writeAsString(jsonEncode(content.toJson()));
+    final file = File('${directory.path}/content_${content.datetime.toIso8601String()}.json');
+    final jsonString = jsonEncode(content.toJson());
+    await file.writeAsString(jsonString);
   }
 
-  static Future<List<Content>> readContentFromFile() async {
+  static void deleteContentFromFile(DateTime dateTime) async {
     final directory = await getApplicationDocumentsDirectory();
-    final files = directory.listSync();
-    List<Content> contents = [];
-
-    for (var file in files) {
-      if (file is File && file.path.endsWith('.json')) {
-        final jsonContent = jsonDecode(await file.readAsString());
-        contents.add(Content.fromJson(jsonContent));
-      }
-    }
-
-    return contents;
-  }
-
-  static Future<void> deleteContentFromFile(DateTime datetime) async {
-    final directory = await getApplicationDocumentsDirectory();
-    final file = File('${directory.path}/${datetime.toIso8601String()}.json');
+    final file = File('${directory.path}/content_${dateTime.toIso8601String()}.json');
     if (await file.exists()) {
       await file.delete();
     }

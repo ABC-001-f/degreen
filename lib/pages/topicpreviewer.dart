@@ -1,6 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:degreen/topics.dart';
+import 'package:degreen/utils/itembox.dart';
 import 'package:degreen/utils/settings_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -154,6 +155,37 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
     final settingsProvider = Provider.of<SettingsProvider>(context);
     return SafeArea(
       child: Scaffold(
+        endDrawer: Drawer(
+          child: CustomScrollView(
+            slivers: [
+              const SliverAppBar.large(
+                title: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Saved Items"),
+                    Text(
+                      "title",
+                      style: TextStyle(fontSize: 14),
+                    ),
+                  ],
+                ),
+              ),
+              SliverList.builder(
+                itemCount: 9,
+                itemBuilder: (context, index) {
+                  return Itembox(
+                    title: "Title:meaning",
+                    content:
+                        "hello bro this is a code from coding nepal one of our team",
+                    datetime: "12-2-2024 3:40pm",
+                    edit: () {},
+                    delete: () {},
+                  );
+                },
+              )
+            ],
+          ),
+        ),
         body: SizedBox(
           child: Stack(
             children: [
@@ -247,12 +279,13 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
                   Expanded(
                     child: Column(
                       children: [
-                        tophide
+                        tophide && deviceType == "mobile"
                             ? const SizedBox()
                             : AnimatedContainer(
                                 padding: const EdgeInsets.all(8.0),
                                 duration: Durations.medium3,
-                                height: tophide ? 0 : 60,
+                                height:
+                                    tophide && deviceType == "mobile" ? 0 : 60,
                                 color: Theme.of(context).hoverColor,
                                 child: Center(
                                   child: Row(
@@ -347,7 +380,16 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
                                           Icons.energy_savings_leaf,
                                           color: Colors.green,
                                         ),
-                                      )
+                                      ),
+                                      Builder(builder: (context) {
+                                        return IconButton(
+                                          onPressed: () {
+                                            Scaffold.of(context)
+                                                .openEndDrawer();
+                                          },
+                                          icon: const Icon(Icons.folder),
+                                        );
+                                      }),
                                     ],
                                   ),
                                 ),
@@ -810,6 +852,7 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
       TextSpan(
         style: TextStyle(
           color: Theme.of(context).textTheme.bodyLarge?.color,
+          fontSize: fontSize,
         ),
         children: spans,
       ),
@@ -869,6 +912,7 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
       TextSpan(
         style: TextStyle(
           color: Theme.of(context).textTheme.bodyLarge?.color,
+          fontSize: fontSize,
         ),
         children: spans,
       ),

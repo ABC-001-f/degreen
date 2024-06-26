@@ -1,7 +1,7 @@
 import 'package:degreen/utils/content.dart';
+import 'package:degreen/utils/itembox.dart';
 import 'package:degreen/utils/storage_helper.dart';
 import 'package:flutter/material.dart';
-
 
 class SavedItemsPage extends StatefulWidget {
   const SavedItemsPage({super.key});
@@ -35,8 +35,9 @@ class _SavedItemsPageState extends State<SavedItemsPage> {
             ? a.datetime.compareTo(b.datetime)
             : b.datetime.compareTo(a.datetime));
       } else if (_sortCriterion == 'title') {
-        _contentList.sort((a, b) =>
-            _ascending ? a.title.compareTo(b.title) : b.title.compareTo(a.title));
+        _contentList.sort((a, b) => _ascending
+            ? a.title.compareTo(b.title)
+            : b.title.compareTo(a.title));
       }
     });
   }
@@ -45,6 +46,16 @@ class _SavedItemsPageState extends State<SavedItemsPage> {
     final content = _contentList[index];
     StorageHelper.deleteContent(index);
     StorageHelper.deleteContentFromFile(content.datetime);
+    _loadContent();
+  }
+
+  void _updateContent(int index, String newTitle, String newContent) {
+    final updatedContent = Content(
+      title: newTitle,
+      datetime: _contentList[index].datetime,
+      content: newContent,
+    );
+    StorageHelper.updateContent(index, updatedContent);
     _loadContent();
   }
 
@@ -89,21 +100,66 @@ class _SavedItemsPageState extends State<SavedItemsPage> {
               itemCount: _contentList.length,
               itemBuilder: (context, index) {
                 final content = _contentList[index];
-                return ListTile(
-                  title: Text(content.title),
-                  subtitle: Text(content.datetime.toIso8601String()),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: () {
-                      _deleteContent(index);
-                    },
-                  ),
-                  onTap: () {
-                    // Navigate to detailed view if needed
+                return Itembox(
+                  title: content.title,
+                  content:
+                      "hello bro this is a code from coding nepal one of our team",
+                  datetime: content.datetime.toIso8601String(),
+                  edit: () {
+                    _showEditDialog(index);
+                  },
+                  delete: () {
+                    _deleteContent(index);
                   },
                 );
               },
             ),
+    );
+  }
+
+  void _showEditDialog(int index) {
+    final titleController =
+        TextEditingController(text: _contentList[index].title);
+    final contentController =
+        TextEditingController(text: _contentList[index].content);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Edit Item'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(labelText: 'Title'),
+              ),
+              TextField(
+                controller: contentController,
+                decoration: const InputDecoration(labelText: 'Content'),
+                maxLines: 5,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+            TextButton(
+              child: const Text('Save'),
+              onPressed: () {
+                _updateContent(
+                    index, titleController.text, contentController.text);
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }
