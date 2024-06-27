@@ -1,8 +1,10 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:degreen/topics.dart';
+import 'package:degreen/utils/content.dart';
 import 'package:degreen/utils/itembox.dart';
 import 'package:degreen/utils/settings_provider.dart';
+import 'package:degreen/utils/storage_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_tts/flutter_tts.dart';
@@ -25,6 +27,7 @@ class Topicpreviewer extends StatefulWidget {
 }
 
 class _TopicpreviewerState extends State<Topicpreviewer> {
+  final GlobalKey _textKey = GlobalKey();
   bool leftpanel = false;
   late ScrollController scrollController;
   ScrollController tscrollController = ScrollController();
@@ -38,8 +41,29 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
   int active = 0;
   double fontSize = 14.0;
   FlutterTts flutterTts = FlutterTts();
-  String? maleVoice;
   Widget children = const SizedBox();
+  final _titleController = TextEditingController();
+  final _contentController = TextEditingController();
+  String selectedText = "";
+  String wordmean = "";
+  String littleload = "";
+  void saveItem() {
+    final title = _titleController.text;
+    final content = _contentController.text;
+    if (title.isNotEmpty && content.isNotEmpty) {
+      final newContent = Content(
+        title: title,
+        datetime: DateTime.now(),
+        content: content,
+      );
+      StorageHelper.addContent(newContent);
+      StorageHelper.saveContentToFile(newContent);
+      Navigator.pop(context);
+    } else {
+      errormsg(context: context, error: 'Title and content cannot be empty');
+    }
+  }
+
   void increaseFontSize() {
     setState(() {
       fontSize += 2.0;
@@ -151,7 +175,8 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
     } else {
       deviceType = 'mobile';
     }
-
+    double deviceWidth = MediaQuery.of(context).size.width;
+    double deviceHeight = MediaQuery.of(context).size.height;
     final settingsProvider = Provider.of<SettingsProvider>(context);
     return SafeArea(
       child: Scaffold(
@@ -481,128 +506,284 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
                                             )
                                           ],
                                         )
-                                      : Stack(
-                                          alignment: Alignment.bottomRight,
+                                      : Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
                                           children: [
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                  top: 8.0, left: 8, right: 8),
-                                              child: SingleChildScrollView(
-                                                controller:
-                                                    deviceType == "mobile"
-                                                        ? scrollController
-                                                        : tscrollController,
-                                                child: children,
-                                              ),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.end,
+                                              children: [
+                                                settingsProvider.settings
+                                                            .language ==
+                                                        "en"
+                                                    ? boxbutton(
+                                                        icon: isSpeaking
+                                                            ? const Icon(
+                                                                Icons
+                                                                    .stop_rounded,
+                                                                color: Colors
+                                                                    .white,
+                                                              )
+                                                            : const Icon(
+                                                                Icons
+                                                                    .volume_up_rounded,
+                                                                color: Colors
+                                                                    .white,
+                                                              ),
+                                                        color: isSpeaking
+                                                            ? Colors.red
+                                                            : Colors.green,
+                                                        onPressed: () {
+                                                          if (!isSpeaking) {
+                                                            speakstring = answer
+                                                                .replaceAll(
+                                                                    "#", "");
+                                                            speakstring =
+                                                                speakstring
+                                                                    .replaceAll(
+                                                                        "*",
+                                                                        "");
+                                                            speak(
+                                                                textToConvert:
+                                                                    speakstring,
+                                                                context:
+                                                                    context,
+                                                                rate: settingsProvider
+                                                                        .settings
+                                                                        .fast
+                                                                    ? 0.6
+                                                                    : 0.5);
+                                                          } else {
+                                                            stopspeaking();
+                                                          }
+                                                        },
+                                                      )
+                                                    : const SizedBox(),
+                                                boxbutton(
+                                                  icon: const Icon(
+                                                      Icons.menu_book_rounded,
+                                                      color: Colors.white),
+                                                  color: Colors.green,
+                                                  onPressed: () async {
+                                                    if (selectedText != "") {
+                                                      setState(() {
+                                                        littleload = "loading";
+                                                      });
+                                                      var translated =
+                                                          await selectedText
+                                                              .translate(
+                                                                  from: 'auto',
+                                                                  to: 'en');
+                                                      wordmean =
+                                                          translated.text;
+
+                                                      wordmean = await Topics()
+                                                          .usingGermini(
+                                                        what:
+                                                            " give me short meaning of $selectedText represent it in a matured way",
+                                                      );
+                                                      if (!wordmean
+                                                          .contains("Error")) {
+                                                        translated = await wordmean
+                                                            .translate(
+                                                                to: settingsProvider
+                                                                    .settings
+                                                                    .language);
+                                                        wordmean =
+                                                            translated.text;
+                                                      }
+                                                      littleload = "done";
+                                                      setState(() {});
+                                                    }
+                                                  },
+                                                ),
+                                                boxbutton(
+                                                  icon: const Icon(
+                                                      Icons.bookmark_add,
+                                                      color: Colors.white),
+                                                  color: Colors.green,
+                                                  onPressed: () {},
+                                                ),
+                                                boxbutton(
+                                                  icon: const Icon(
+                                                      Icons.zoom_in_rounded,
+                                                      color: Colors.white),
+                                                  color: Colors.green,
+                                                  onPressed: () {
+                                                    fontSize += 2.0;
+                                                    children =
+                                                        parseMarkdown(answer);
+                                                    setState(() {});
+                                                  },
+                                                ),
+                                                boxbutton(
+                                                  icon: const Icon(
+                                                      Icons.zoom_out_rounded,
+                                                      color: Colors.white),
+                                                  color: Colors.green,
+                                                  onPressed: () {
+                                                    fontSize = 14;
+                                                    children =
+                                                        parseMarkdown(answer);
+                                                    setState(() {});
+                                                  },
+                                                ),
+                                              ],
                                             ),
-                                            tophide
-                                                ? const SizedBox()
-                                                : Column(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment.end,
-                                                    children: [
-                                                      settingsProvider.settings
-                                                                  .language ==
-                                                              "en"
-                                                          ? Container(
-                                                              margin:
-                                                                  const EdgeInsets
-                                                                      .all(6),
-                                                              decoration:
-                                                                  BoxDecoration(
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            12),
-                                                                color: isSpeaking
-                                                                    ? Colors.red
-                                                                    : Colors
-                                                                        .green,
+                                            Expanded(
+                                              child: Stack(
+                                                alignment: Alignment.center,
+                                                children: [
+                                                  SingleChildScrollView(
+                                                    controller:
+                                                        deviceType == "mobile"
+                                                            ? scrollController
+                                                            : tscrollController,
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              top: 8,
+                                                              left: 8,
+                                                              right: 8),
+                                                      child: children,
+                                                    ),
+                                                  ),
+                                                  wordmean == ""
+                                                      ? const SizedBox()
+                                                      : Container(
+                                                          width:
+                                                              deviceWidth - 120,
+                                                          height: deviceHeight -
+                                                              300,
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .all(8),
+                                                          margin:
+                                                              const EdgeInsets
+                                                                  .all(8),
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        20),
+                                                            color: Theme.of(
+                                                                    context)
+                                                                .scaffoldBackgroundColor,
+                                                            border: Border.all(
+                                                              width: 5,
+                                                              color: Theme.of(
+                                                                      context)
+                                                                  .hoverColor,
+                                                            ),
+                                                          ),
+                                                          child: Column(
+                                                            crossAxisAlignment:
+                                                                CrossAxisAlignment
+                                                                    .start,
+                                                            children: [
+                                                              Padding(
+                                                                padding:
+                                                                    const EdgeInsets
+                                                                        .all(
+                                                                        8.0),
+                                                                child: Text(
+                                                                  selectedText,
+                                                                  style:
+                                                                      const TextStyle(
+                                                                    fontSize:
+                                                                        20,
+                                                                  ),
+                                                                ),
                                                               ),
-                                                              child: IconButton(
-                                                                onPressed: () {
-                                                                  if (!isSpeaking) {
-                                                                    speakstring =
-                                                                        answer.replaceAll(
-                                                                            "#",
-                                                                            "");
-                                                                    speakstring =
-                                                                        speakstring.replaceAll(
-                                                                            "*",
-                                                                            "");
-                                                                    speak(
-                                                                        textToConvert:
-                                                                            speakstring,
-                                                                        context:
-                                                                            context,
-                                                                        rate: settingsProvider.settings.fast
-                                                                            ? 0.6
-                                                                            : 0.5);
-                                                                  } else {
-                                                                    stopspeaking();
-                                                                  }
-                                                                },
-                                                                icon: isSpeaking
-                                                                    ? const Icon(
-                                                                        Icons
-                                                                            .stop_rounded)
-                                                                    : const Icon(
-                                                                        Icons
-                                                                            .volume_up_rounded),
+                                                              const Divider(
+                                                                thickness: 3,
                                                               ),
-                                                            )
-                                                          : const SizedBox(),
-                                                      Container(
-                                                        margin: const EdgeInsets
-                                                            .symmetric(
-                                                            horizontal: 6,
-                                                            vertical: 3),
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(12),
-                                                          color: Colors.green,
-                                                        ),
-                                                        child: IconButton(
-                                                          onPressed: () {
-                                                            fontSize += 2.0;
-                                                            children =
-                                                                parseMarkdown(
-                                                                    answer);
-                                                            setState(() {});
-                                                          },
-                                                          icon: const Icon(
-                                                              Icons.add),
-                                                        ),
-                                                      ),
-                                                      Container(
-                                                        margin: const EdgeInsets
-                                                            .symmetric(
-                                                            horizontal: 6,
-                                                            vertical: 3),
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(12),
-                                                          color: Colors.green,
-                                                        ),
-                                                        child: IconButton(
-                                                          onPressed: () {
-                                                            fontSize = 14;
-                                                            children =
-                                                                parseMarkdown(
-                                                                    answer);
-                                                            setState(() {});
-                                                          },
-                                                          icon: const Icon(
-                                                            Icons.remove,
+                                                              Expanded(
+                                                                child:
+                                                                    Container(
+                                                                  width: double
+                                                                      .infinity,
+                                                                  padding:
+                                                                      const EdgeInsets
+                                                                          .all(
+                                                                          8),
+                                                                  decoration:
+                                                                      BoxDecoration(
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                            15),
+                                                                    color: Theme.of(
+                                                                            context)
+                                                                        .splashColor,
+                                                                  ),
+                                                                  child: littleload ==
+                                                                          "loading"
+                                                                      ? const Center(
+                                                                          child:
+                                                                              CircularProgressIndicator(),
+                                                                        )
+                                                                      : SingleChildScrollView(
+                                                                          child:
+                                                                              Text(wordmean),
+                                                                        ),
+                                                                ),
+                                                              ),
+                                                              Padding(
+                                                                padding:
+                                                                    const EdgeInsets
+                                                                        .all(
+                                                                        8.0),
+                                                                child: Row(
+                                                                  mainAxisAlignment:
+                                                                      MainAxisAlignment
+                                                                          .end,
+                                                                  children: [
+                                                                    TextButton(
+                                                                      onPressed:
+                                                                          () {
+                                                                        setState(
+                                                                            () {
+                                                                          selectedText =
+                                                                              "";
+                                                                          wordmean =
+                                                                              "";
+                                                                        });
+                                                                      },
+                                                                      child:
+                                                                          Container(
+                                                                        padding: const EdgeInsets
+                                                                            .symmetric(
+                                                                            horizontal:
+                                                                                12,
+                                                                            vertical:
+                                                                                8),
+                                                                        decoration:
+                                                                            BoxDecoration(
+                                                                          color:
+                                                                              Colors.red,
+                                                                          borderRadius:
+                                                                              BorderRadius.circular(12),
+                                                                        ),
+                                                                        child:
+                                                                            const Text(
+                                                                          "close",
+                                                                          style: TextStyle(
+                                                                              color: Colors.white,
+                                                                              fontSize: 12),
+                                                                        ),
+                                                                      ),
+                                                                    )
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                            ],
                                                           ),
                                                         ),
-                                                      ),
-                                                    ],
-                                                  )
+                                                ],
+                                              ),
+                                            ),
                                           ],
                                         ),
                         )
@@ -714,6 +895,24 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
     );
   }
 
+  Container boxbutton({
+    required Icon icon,
+    required Color color,
+    required void Function()? onPressed,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: color,
+      ),
+      child: IconButton(
+        onPressed: onPressed,
+        icon: icon,
+      ),
+    );
+  }
+
   Widget parseMarkdown(String data) {
     List<TextSpan> textspans = [];
     List<String> lines = data.split('\n');
@@ -783,12 +982,13 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
       }
     }
     Widget markdownedit = SelectableText.rich(
+      key: _textKey,
       TextSpan(children: textspans),
       onSelectionChanged: (TextSelection selection, _) {
         if (selection.baseOffset != selection.extentOffset) {
-          String selectedText = selectiondata.substring(
+          selectedText = selectiondata.substring(
               selection.baseOffset, selection.extentOffset);
-          print('Selected Text: $selectedText');
+          setState(() {});
         }
       },
     );
