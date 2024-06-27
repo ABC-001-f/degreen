@@ -5,6 +5,7 @@ import 'package:degreen/utils/content.dart';
 import 'package:degreen/utils/itembox.dart';
 import 'package:degreen/utils/settings_provider.dart';
 import 'package:degreen/utils/storage_helper.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_tts/flutter_tts.dart';
@@ -27,8 +28,10 @@ class Topicpreviewer extends StatefulWidget {
 }
 
 class _TopicpreviewerState extends State<Topicpreviewer> {
-  final GlobalKey _textKey = GlobalKey();
   bool leftpanel = false;
+  List<Content> _contentList = [];
+  String _sortCriterion = 'date';
+  bool _ascending = true;
   late ScrollController scrollController;
   ScrollController tscrollController = ScrollController();
   double scrollyoffset = 0;
@@ -68,6 +71,44 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
     setState(() {
       fontSize += 2.0;
     });
+  }
+
+  void _loadContent() {
+    setState(() {
+      _contentList = StorageHelper.getAllContent();
+      _sortContent();
+    });
+  }
+
+  void _sortContent() {
+    setState(() {
+      if (_sortCriterion == 'date') {
+        _contentList.sort((a, b) => _ascending
+            ? a.datetime.compareTo(b.datetime)
+            : b.datetime.compareTo(a.datetime));
+      } else if (_sortCriterion == 'title') {
+        _contentList.sort((a, b) => _ascending
+            ? a.title.compareTo(b.title)
+            : b.title.compareTo(a.title));
+      }
+    });
+  }
+
+  void _deleteContent(int index) {
+    final content = _contentList[index];
+    StorageHelper.deleteContent(index);
+    StorageHelper.deleteContentFromFile(content.datetime);
+    _loadContent();
+  }
+
+  void _updateContent(int index, String newTitle, String newContent) {
+    final updatedContent = Content(
+      title: newTitle,
+      datetime: _contentList[index].datetime,
+      content: newContent,
+    );
+    StorageHelper.updateContent(index, updatedContent);
+    _loadContent();
   }
 
   void resetFontSize() {
@@ -121,6 +162,7 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
     _scrollController.addListener(_onScroll);
     scrollController = ScrollController();
     scrollController.addListener(onScroll);
+    _loadContent();
   }
 
   @override
@@ -178,36 +220,46 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
     double deviceWidth = MediaQuery.of(context).size.width;
     double deviceHeight = MediaQuery.of(context).size.height;
     final settingsProvider = Provider.of<SettingsProvider>(context);
+
     return SafeArea(
       child: Scaffold(
         endDrawer: Drawer(
           child: CustomScrollView(
             slivers: [
-              const SliverAppBar.large(
+              SliverAppBar.large(
                 title: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("Saved Items"),
+                    const Text("Saved Items"),
                     Text(
-                      "title",
-                      style: TextStyle(fontSize: 14),
+                      widget.topic,
+                      style: const TextStyle(fontSize: 14),
                     ),
                   ],
                 ),
+                actions: const [SizedBox()],
               ),
-              SliverList.builder(
-                itemCount: 9,
-                itemBuilder: (context, index) {
-                  return Itembox(
-                    title: "Title:meaning",
-                    content:
-                        "hello bro this is a code from coding nepal one of our team",
-                    datetime: "12-2-2024 3:40pm",
-                    edit: () {},
-                    delete: () {},
-                  );
-                },
-              )
+              _contentList.isEmpty
+                  ? const SliverFillRemaining(
+                      child: Center(child: Text('No items found')),
+                    )
+                  : SliverList.builder(
+                      itemCount: _contentList.length,
+                      itemBuilder: (context, index) {
+                        final content = _contentList[index];
+                        return Itembox(
+                          title: content.title,
+                          content: content.content,
+                          datetime: content.datetime.toIso8601String(),
+                          edit: () {
+                            _showEditDialog(index);
+                          },
+                          delete: () {
+                            _deleteContent(index);
+                          },
+                        );
+                      },
+                    )
             ],
           ),
         ),
@@ -568,6 +620,7 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
                                                   onPressed: () async {
                                                     if (selectedText != "") {
                                                       setState(() {
+                                                        wordmean = "loading";
                                                         littleload = "loading";
                                                       });
                                                       var translated =
@@ -603,7 +656,60 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
                                                       Icons.bookmark_add,
                                                       color: Colors.white),
                                                   color: Colors.green,
-                                                  onPressed: () {},
+                                                  onPressed: () {
+                                                    showDialog(
+                                                      context: context,
+                                                      builder: (context) {
+                                                        return SimpleDialog(
+                                                          children: [
+                                                            Padding(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                      .all(8.0),
+                                                              child: TextField(
+                                                                controller:
+                                                                    _titleController,
+                                                                decoration:
+                                                                    const InputDecoration(
+                                                                        labelText:
+                                                                            'Title'),
+                                                              ),
+                                                            ),
+                                                            Padding(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                      .all(8.0),
+                                                              child: TextField(
+                                                                controller:
+                                                                    _contentController,
+                                                                decoration:
+                                                                    const InputDecoration(
+                                                                        labelText:
+                                                                            'Content'),
+                                                                maxLines: 5,
+                                                              ),
+                                                            ),
+                                                            const SizedBox(
+                                                                height: 16),
+                                                            Padding(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                      .all(8.0),
+                                                              child:
+                                                                  CupertinoButton
+                                                                      .filled(
+                                                                onPressed:
+                                                                    saveItem,
+                                                                child:
+                                                                    const Text(
+                                                                        'Save'),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        );
+                                                      },
+                                                    );
+                                                  },
                                                 ),
                                                 boxbutton(
                                                   icon: const Icon(
@@ -726,7 +832,7 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
                                                                         )
                                                                       : SingleChildScrollView(
                                                                           child:
-                                                                              Text(wordmean),
+                                                                              parseMarkdown(wordmean),
                                                                         ),
                                                                 ),
                                                               ),
@@ -745,8 +851,6 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
                                                                           () {
                                                                         setState(
                                                                             () {
-                                                                          selectedText =
-                                                                              "";
                                                                           wordmean =
                                                                               "";
                                                                         });
@@ -895,6 +999,52 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
     );
   }
 
+  void _showEditDialog(int index) {
+    final titleController =
+        TextEditingController(text: _contentList[index].title);
+    final contentController =
+        TextEditingController(text: _contentList[index].content);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Edit Item'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(labelText: 'Title'),
+              ),
+              TextField(
+                controller: contentController,
+                decoration: const InputDecoration(labelText: 'Content'),
+                maxLines: 5,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+            TextButton(
+              child: const Text('Save'),
+              onPressed: () {
+                _updateContent(
+                    index, titleController.text, contentController.text);
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Container boxbutton({
     required Icon icon,
     required Color color,
@@ -982,12 +1132,14 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
       }
     }
     Widget markdownedit = SelectableText.rich(
-      key: _textKey,
       TextSpan(children: textspans),
-      onSelectionChanged: (TextSelection selection, _) {
+      onSelectionChanged: (TextSelection selection, SelectionChangedCause? _) {
         if (selection.baseOffset != selection.extentOffset) {
           selectedText = selectiondata.substring(
               selection.baseOffset, selection.extentOffset);
+          setState(() {});
+        } else if (_ == SelectionChangedCause.tap) {
+          selectedText = "";
           setState(() {});
         }
       },

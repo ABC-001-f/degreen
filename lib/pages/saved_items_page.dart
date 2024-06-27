@@ -103,7 +103,7 @@ class _SavedItemsPageState extends State<SavedItemsPage> {
                 return Itembox(
                   title: content.title,
                   content:
-                      "hello bro this is a code from coding nepal one of our team",
+                     content.content,
                   datetime: content.datetime.toIso8601String(),
                   edit: () {
                     _showEditDialog(index);

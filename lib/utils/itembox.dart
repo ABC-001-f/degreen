@@ -22,7 +22,7 @@ class Itembox extends StatefulWidget {
 class _ItemboxState extends State<Itembox> {
   @override
   Widget build(BuildContext context) {
-    List<String> titlesplitter = widget.title.split(":");
+    List<String> titlesplitter = widget.title.split("-::::-");
     String title = titlesplitter[0];
     String subtitle = titlesplitter[1];
     return Container(
@@ -70,10 +70,12 @@ class _ItemboxState extends State<Itembox> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  widget.datetime,
-                  style: const TextStyle(
-                    fontSize: 15,
+                Expanded(
+                  child: Text(
+                    widget.datetime,
+                    style: const TextStyle(
+                      fontSize: 15,
+                    ),
                   ),
                 ),
                 Row(

@@ -32,7 +32,7 @@ class StorageHelper {
 
   static void saveContentToFile(Content content) async {
     final directory = await getApplicationDocumentsDirectory();
-    final file = File('${directory.path}/content_${content.datetime.toIso8601String()}.json');
+    final file = File('${directory.path}/content_${content.datetime.toIso8601String().replaceAll(':', '-')}.json');
     final jsonString = jsonEncode(content.toJson());
     await file.writeAsString(jsonString);
   }
