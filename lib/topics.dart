@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 
 class Topics {
@@ -759,7 +760,8 @@ class Topics {
   }
 
   String getApiKey() {
-    return "AIzaSyDlZDBspcTmh8MztYbO4p6SIi101HE84X0";
+    String apiget = dotenv.env["API_KEY"]!;
+    return apiget;
   }
 
   Future<String> usingGermini({required String what}) async {
