@@ -69,6 +69,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+
     double screenWidth = MediaQuery.of(context).size.width;
     String deviceType = "";
     if (screenWidth >= 1200) {

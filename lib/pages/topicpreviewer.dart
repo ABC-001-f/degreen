@@ -6,6 +6,7 @@ import 'package:degreen/utils/itembox.dart';
 import 'package:degreen/utils/settings_provider.dart';
 import 'package:degreen/utils/storage_helper.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_tts/flutter_tts.dart';
@@ -28,28 +29,30 @@ class Topicpreviewer extends StatefulWidget {
 }
 
 class _TopicpreviewerState extends State<Topicpreviewer> {
-  bool leftpanel = false;
+  bool leftpanel = false,
+      ascending = true,
+      tophide = false,
+      _isDescriptionVisible = false,
+      outfocus = true,
+      isSpeaking = false;
   List<Content> _contentList = [];
-  String _sortCriterion = 'date';
-  bool _ascending = true;
+  String sortCriterion = 'date',
+      answer = "",
+      speakstring = "",
+      selectedText = "",
+      wordmean = "",
+      littleload = "",
+      activesubtitle = "";
   late ScrollController scrollController;
   ScrollController tscrollController = ScrollController();
   double scrollyoffset = 0;
-  bool tophide = false;
-  bool _isDescriptionVisible = false;
   late ScrollController _scrollController;
-  String answer = "";
-  String speakstring = "";
-  bool isSpeaking = false;
   int active = 0;
   double fontSize = 14.0;
   FlutterTts flutterTts = FlutterTts();
   Widget children = const SizedBox();
   final _titleController = TextEditingController();
   final _contentController = TextEditingController();
-  String selectedText = "";
-  String wordmean = "";
-  String littleload = "";
   void saveItem() {
     final title = _titleController.text;
     final content = _contentController.text;
@@ -82,12 +85,12 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
 
   void _sortContent() {
     setState(() {
-      if (_sortCriterion == 'date') {
-        _contentList.sort((a, b) => _ascending
+      if (sortCriterion == 'date') {
+        _contentList.sort((a, b) => ascending
             ? a.datetime.compareTo(b.datetime)
             : b.datetime.compareTo(a.datetime));
-      } else if (_sortCriterion == 'title') {
-        _contentList.sort((a, b) => _ascending
+      } else if (sortCriterion == 'title') {
+        _contentList.sort((a, b) => ascending
             ? a.title.compareTo(b.title)
             : b.title.compareTo(a.title));
       }
@@ -604,8 +607,12 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
                                                                 rate: settingsProvider
                                                                         .settings
                                                                         .fast
-                                                                    ? 0.6
-                                                                    : 0.5);
+                                                                    ? kIsWeb
+                                                                        ? 1.4
+                                                                        : 0.6
+                                                                    : kIsWeb
+                                                                        ? 1
+                                                                        : 0.5);
                                                           } else {
                                                             stopspeaking();
                                                           }
@@ -623,30 +630,38 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
                                                         wordmean = "loading";
                                                         littleload = "loading";
                                                       });
-                                                      var translated =
-                                                          await selectedText
-                                                              .translate(
-                                                                  from: 'auto',
-                                                                  to: 'en');
-                                                      wordmean =
-                                                          translated.text;
-
-                                                      wordmean = await Topics()
-                                                          .usingGermini(
-                                                        what:
-                                                            " give me short meaning of $selectedText represent it in a matured way",
-                                                      );
-                                                      if (!wordmean
-                                                          .contains("Error")) {
-                                                        translated = await wordmean
-                                                            .translate(
-                                                                to: settingsProvider
-                                                                    .settings
-                                                                    .language);
+                                                      try {
+                                                        var translated =
+                                                            await selectedText
+                                                                .translate(
+                                                                    from:
+                                                                        'auto',
+                                                                    to: 'en');
                                                         wordmean =
                                                             translated.text;
+
+                                                        wordmean =
+                                                            await Topics()
+                                                                .usingGermini(
+                                                          what:
+                                                              " give me short meaning of $selectedText represent it in a matured way",
+                                                        );
+                                                        if (!wordmean.contains(
+                                                            "Error")) {
+                                                          translated = await wordmean
+                                                              .translate(
+                                                                  to: settingsProvider
+                                                                      .settings
+                                                                      .language);
+                                                          wordmean =
+                                                              translated.text;
+                                                        }
+                                                        littleload = "done";
+                                                      } on Exception {
+                                                        littleload = "done";
+                                                        wordmean =
+                                                            "Error: network issue";
                                                       }
-                                                      littleload = "done";
                                                       setState(() {});
                                                     }
                                                   },
@@ -830,10 +845,20 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
                                                                           child:
                                                                               CircularProgressIndicator(),
                                                                         )
-                                                                      : SingleChildScrollView(
-                                                                          child:
-                                                                              parseMarkdown(wordmean),
-                                                                        ),
+                                                                      : wordmean
+                                                                              .contains("Error")
+                                                                          ? const Center(
+                                                                              child: Column(
+                                                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                                                children: [
+                                                                                  Icon(CupertinoIcons.wifi_exclamationmark),
+                                                                                  Text("No Internet Connection")
+                                                                                ],
+                                                                              ),
+                                                                            )
+                                                                          : SingleChildScrollView(
+                                                                              child: parseMarkdown(wordmean),
+                                                                            ),
                                                                 ),
                                                               ),
                                                               Padding(
@@ -849,11 +874,15 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
                                                                     TextButton(
                                                                       onPressed:
                                                                           () {
-                                                                        setState(
-                                                                            () {
-                                                                          wordmean =
+                                                                        if (outfocus ==
+                                                                            true) {
+                                                                          selectedText =
                                                                               "";
-                                                                        });
+                                                                        }
+                                                                        wordmean =
+                                                                            "";
+                                                                        setState(
+                                                                            () {});
                                                                       },
                                                                       child:
                                                                           Container(
@@ -1137,9 +1166,13 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
         if (selection.baseOffset != selection.extentOffset) {
           selectedText = selectiondata.substring(
               selection.baseOffset, selection.extentOffset);
+          outfocus = false;
           setState(() {});
         } else if (_ == SelectionChangedCause.tap) {
-          selectedText = "";
+          outfocus = true;
+          if (wordmean == "" && littleload != "loading") {
+            selectedText = "";
+          }
           setState(() {});
         }
       },
