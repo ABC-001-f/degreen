@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class Itembox extends StatefulWidget {
   final String title;
@@ -25,6 +26,11 @@ class _ItemboxState extends State<Itembox> {
     List<String> titlesplitter = widget.title.split("-::::-");
     String title = titlesplitter[0];
     String subtitle = titlesplitter[1];
+     String isoDate = widget.datetime;
+    DateTime dateTime = DateTime.parse(isoDate);
+
+    String formattedDate = DateFormat('MMMM dd, yyyy').format(dateTime);
+    String formattedTime = DateFormat('hh:mm a').format(dateTime);
     return Container(
       padding: const EdgeInsets.all(8),
       margin: const EdgeInsets.all(8),
@@ -72,7 +78,7 @@ class _ItemboxState extends State<Itembox> {
               children: [
                 Expanded(
                   child: Text(
-                    widget.datetime,
+                   "$formattedDate . $formattedTime",
                     style: const TextStyle(
                       fontSize: 15,
                     ),

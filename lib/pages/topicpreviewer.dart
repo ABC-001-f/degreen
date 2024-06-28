@@ -52,9 +52,12 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
   FlutterTts flutterTts = FlutterTts();
   Widget children = const SizedBox();
   final _titleController = TextEditingController();
+  final _subtitleController = TextEditingController();
   final _contentController = TextEditingController();
+
+
   void saveItem() {
-    final title = _titleController.text;
+    final title = "${_titleController.text}-::::-${_subtitleController.text}";
     final content = _contentController.text;
     if (title.isNotEmpty && content.isNotEmpty) {
       final newContent = Content(
@@ -64,6 +67,7 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
       );
       StorageHelper.addContent(newContent);
       StorageHelper.saveContentToFile(newContent);
+    _loadContent();
       Navigator.pop(context);
     } else {
       errormsg(context: context, error: 'Title and content cannot be empty');
@@ -625,7 +629,9 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
                                                       color: Colors.white),
                                                   color: Colors.green,
                                                   onPressed: () async {
-                                                    if (selectedText != "") {
+                                                    if (selectedText != "" &&
+                                                        selectedText.length <=
+                                                            45) {
                                                       setState(() {
                                                         wordmean = "loading";
                                                         littleload = "loading";
@@ -663,6 +669,18 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
                                                             "Error: network issue";
                                                       }
                                                       setState(() {});
+                                                    } else if (selectedText
+                                                            .length >
+                                                        45) {
+                                                      errormsg(
+                                                          context: context,
+                                                          error:
+                                                              "More than the amount needed");
+                                                    } else {
+                                                      errormsg(
+                                                          context: context,
+                                                          error:
+                                                              "Select a word to find its meaning");
                                                     }
                                                   },
                                                 ),
@@ -672,58 +690,91 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
                                                       color: Colors.white),
                                                   color: Colors.green,
                                                   onPressed: () {
-                                                    showDialog(
-                                                      context: context,
-                                                      builder: (context) {
-                                                        return SimpleDialog(
-                                                          children: [
-                                                            Padding(
-                                                              padding:
-                                                                  const EdgeInsets
-                                                                      .all(8.0),
-                                                              child: TextField(
-                                                                controller:
-                                                                    _titleController,
-                                                                decoration:
-                                                                    const InputDecoration(
-                                                                        labelText:
-                                                                            'Title'),
-                                                              ),
-                                                            ),
-                                                            Padding(
-                                                              padding:
-                                                                  const EdgeInsets
-                                                                      .all(8.0),
-                                                              child: TextField(
-                                                                controller:
-                                                                    _contentController,
-                                                                decoration:
-                                                                    const InputDecoration(
-                                                                        labelText:
-                                                                            'Content'),
-                                                                maxLines: 5,
-                                                              ),
-                                                            ),
-                                                            const SizedBox(
-                                                                height: 16),
-                                                            Padding(
-                                                              padding:
-                                                                  const EdgeInsets
-                                                                      .all(8.0),
-                                                              child:
-                                                                  CupertinoButton
-                                                                      .filled(
-                                                                onPressed:
-                                                                    saveItem,
+                                                    if (selectedText != "") {
+                                                      _titleController.text =
+                                                          widget.topic;
+                                                          _subtitleController.text = activesubtitle;
+                                                      _contentController.text =
+                                                          selectedText;
+                                                      showDialog(
+                                                        context: context,
+                                                        builder: (context) {
+                                                          return SimpleDialog(
+                                                            children: [
+                                                              Padding(
+                                                                padding:
+                                                                    const EdgeInsets
+                                                                        .all(
+                                                                        8.0),
                                                                 child:
-                                                                    const Text(
-                                                                        'Save'),
+                                                                    TextField(
+                                                                  controller:
+                                                                      _titleController,
+                                                                  decoration:
+                                                                      const InputDecoration(
+                                                                    labelText:
+                                                                        'Title',
+                                                                  ),
+                                                                ),
                                                               ),
-                                                            ),
-                                                          ],
-                                                        );
-                                                      },
-                                                    );
+                                                               Padding(
+                                                                padding:
+                                                                    const EdgeInsets
+                                                                        .all(
+                                                                        8.0),
+                                                                child:
+                                                                    TextField(
+                                                                  controller:
+                                                                      _subtitleController,
+                                                                  decoration:
+                                                                      const InputDecoration(
+                                                                    labelText:
+                                                                        'Subtitle',
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                              Padding(
+                                                                padding:
+                                                                    const EdgeInsets
+                                                                        .all(
+                                                                        8.0),
+                                                                child:
+                                                                    TextField(
+                                                                  controller:
+                                                                      _contentController,
+                                                                  decoration: const InputDecoration(
+                                                                      labelText:
+                                                                          'Content'),
+                                                                  maxLines: 5,
+                                                                ),
+                                                              ),
+                                                              const SizedBox(
+                                                                  height: 16),
+                                                              Padding(
+                                                                padding:
+                                                                    const EdgeInsets
+                                                                        .all(
+                                                                        8.0),
+                                                                child:
+                                                                    CupertinoButton
+                                                                        .filled(
+                                                                  onPressed:
+                                                                      saveItem,
+                                                                  child:
+                                                                      const Text(
+                                                                          'Save'),
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          );
+                                                        },
+                                                      );
+                                                    } else {
+                                                      errormsg(
+                                                          context: context,
+                                                          error:
+                                                              "select sentences, words, descriptions to save for offline use");
+                                                    }
                                                   },
                                                 ),
                                                 boxbutton(
@@ -1029,8 +1080,13 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
   }
 
   void _showEditDialog(int index) {
+    List<String> titlesplitter =  _contentList[index].title.split("-::::-");
+    String title = titlesplitter[0];
+    String subtitle = titlesplitter[1];
     final titleController =
-        TextEditingController(text: _contentList[index].title);
+        TextEditingController(text: title);
+            final subtitleController =
+        TextEditingController(text: subtitle);
     final contentController =
         TextEditingController(text: _contentList[index].content);
 
@@ -1045,6 +1101,10 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
               TextField(
                 controller: titleController,
                 decoration: const InputDecoration(labelText: 'Title'),
+              ),
+                TextField(
+                controller: subtitleController,
+                decoration: const InputDecoration(labelText: 'Subtitle'),
               ),
               TextField(
                 controller: contentController,
@@ -1387,9 +1447,10 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
     setState(() {
       answer = "loading";
     });
+    activesubtitle = widget.descriptions[index];
     answer = await Topics().usingGermini(
       what:
-          " give me the ${widget.descriptions[index]} of ${widget.topic} represent it in a matured way",
+          " give me the $activesubtitle of ${widget.topic} represent it in a matured way",
     );
     if (type != "reload") active = index + 1;
     if (!answer.contains("Error")) {
