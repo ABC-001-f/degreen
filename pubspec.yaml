@@ -90,10 +90,10 @@ flutter:
 flutter_native_splash:
   color: "#ffffff"
 
-  image: lib/assets/degreen.png
+  image: lib/assets/degreen icon.png
 
   android_12:
-    image: lib/assets/degreen.png
+    image: lib/assets/degreen icon.png
     color: "#ffffff"
   android_gravity: center
 
