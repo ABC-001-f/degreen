@@ -61,65 +61,85 @@ class _SavedItemsPageState extends State<SavedItemsPage> {
 
   @override
   Widget build(BuildContext context) {
+    double deviceWidth = MediaQuery.of(context).size.width;
+    String deviceType = "";
+    if (deviceWidth >= 600) {
+      deviceType = 'huge';
+    } else {
+      deviceType = 'mobile';
+    }
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Saved Items'),
-        actions: [
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              setState(() {
-                _sortCriterion = value;
-                _sortContent();
-              });
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'date',
-                child: Text('Sort by Date'),
-              ),
-              const PopupMenuItem(
-                value: 'title',
-                child: Text('Sort by Title'),
-              ),
-            ],
-          ),
-          IconButton(
-            icon: Icon(_ascending ? Icons.arrow_upward : Icons.arrow_downward),
-            onPressed: () {
-              setState(() {
-                _ascending = !_ascending;
-                _sortContent();
-              });
-            },
-          ),
-        ],
-      ),
-      body: _contentList.isEmpty
-          ? const Center(child: Text('No items found'))
-          : ListView.builder(
-              itemCount: _contentList.length,
-              itemBuilder: (context, index) {
-                final content = _contentList[index];
-                return Itembox(
-                  title: content.title,
-                  content:
-                     content.content,
-                  datetime: content.datetime.toIso8601String(),
-                  edit: () {
-                    _showEditDialog(index);
-                  },
-                  delete: () {
-                    _deleteContent(index);
-                  },
-                );
+        appBar: AppBar(
+          title: const Text('Saved Items'),
+          actions: [
+            PopupMenuButton<String>(
+              onSelected: (value) {
+                setState(() {
+                  _sortCriterion = value;
+                  _sortContent();
+                });
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'date',
+                  child: Text('Sort by Date'),
+                ),
+                const PopupMenuItem(
+                  value: 'title',
+                  child: Text('Sort by Title'),
+                ),
+              ],
+            ),
+            IconButton(
+              icon:
+                  Icon(_ascending ? Icons.arrow_upward : Icons.arrow_downward),
+              onPressed: () {
+                setState(() {
+                  _ascending = !_ascending;
+                  _sortContent();
+                });
               },
             ),
-    );
+          ],
+        ),
+        body: _contentList.isEmpty
+            ? const Center(child: Text('No items found'))
+            : Center(
+                child: SingleChildScrollView(
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    runAlignment: WrapAlignment.center,
+                    children: List.generate(
+                      _contentList.length,
+                      (index) {
+                        final content = _contentList[index];
+                        return SizedBox(
+                          width: deviceType == "mobile" ? deviceWidth : 300,
+                          child: Itembox(
+                            title: content.title,
+                            content: content.content,
+                            datetime: content.datetime.toIso8601String(),
+                            edit: () {
+                              _showEditDialog(index);
+                            },
+                            delete: () {
+                              _deleteContent(index);
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ));
   }
 
   void _showEditDialog(int index) {
-    final titleController =
-        TextEditingController(text: _contentList[index].title);
+    List<String> titlesplitter = _contentList[index].title.split("-::::-");
+    String title = titlesplitter[0];
+    String subtitle = titlesplitter[1];
+    final titleController = TextEditingController(text: title);
+    final subtitleController = TextEditingController(text: subtitle);
     final contentController =
         TextEditingController(text: _contentList[index].content);
 
@@ -134,6 +154,10 @@ class _SavedItemsPageState extends State<SavedItemsPage> {
               TextField(
                 controller: titleController,
                 decoration: const InputDecoration(labelText: 'Title'),
+              ),
+              TextField(
+                controller: subtitleController,
+                decoration: const InputDecoration(labelText: 'Subtitle'),
               ),
               TextField(
                 controller: contentController,

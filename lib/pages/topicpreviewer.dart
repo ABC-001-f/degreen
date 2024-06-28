@@ -215,17 +215,16 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
 
   @override
   Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
+    double deviceWidth = MediaQuery.of(context).size.width;
+    double deviceHeight = MediaQuery.of(context).size.height;
     String deviceType = "";
-    if (screenWidth >= 1200) {
+    if (deviceWidth >= 1200) {
       deviceType = 'huge';
-    } else if (screenWidth >= 700) {
+    } else if (deviceWidth >= 700) {
       deviceType = 'tablet';
     } else {
       deviceType = 'mobile';
     }
-    double deviceWidth = MediaQuery.of(context).size.width;
-    double deviceHeight = MediaQuery.of(context).size.height;
     final settingsProvider = Provider.of<SettingsProvider>(context);
 
     return SafeArea(
