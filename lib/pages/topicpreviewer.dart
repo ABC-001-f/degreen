@@ -55,7 +55,6 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
   final _subtitleController = TextEditingController();
   final _contentController = TextEditingController();
 
-
   void saveItem() {
     final title = "${_titleController.text}-::::-${_subtitleController.text}";
     final content = _contentController.text;
@@ -67,7 +66,7 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
       );
       StorageHelper.addContent(newContent);
       StorageHelper.saveContentToFile(newContent);
-    _loadContent();
+      _loadContent();
       Navigator.pop(context);
     } else {
       errormsg(context: context, error: 'Title and content cannot be empty');
@@ -459,9 +458,8 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
                                           borderRadius:
                                               BorderRadius.circular(12),
                                         ),
-                                        child: const Icon(
-                                          Icons.energy_savings_leaf,
-                                          color: Colors.green,
+                                        child: Image.asset(
+                                          "lib/assets/new degreen ic.png",
                                         ),
                                       ),
                                       Builder(builder: (context) {
@@ -692,7 +690,8 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
                                                     if (selectedText != "") {
                                                       _titleController.text =
                                                           widget.topic;
-                                                          _subtitleController.text = activesubtitle;
+                                                      _subtitleController.text =
+                                                          activesubtitle;
                                                       _contentController.text =
                                                           selectedText;
                                                       showDialog(
@@ -716,7 +715,7 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
                                                                   ),
                                                                 ),
                                                               ),
-                                                               Padding(
+                                                              Padding(
                                                                 padding:
                                                                     const EdgeInsets
                                                                         .all(
@@ -1079,13 +1078,11 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
   }
 
   void _showEditDialog(int index) {
-    List<String> titlesplitter =  _contentList[index].title.split("-::::-");
+    List<String> titlesplitter = _contentList[index].title.split("-::::-");
     String title = titlesplitter[0];
     String subtitle = titlesplitter[1];
-    final titleController =
-        TextEditingController(text: title);
-            final subtitleController =
-        TextEditingController(text: subtitle);
+    final titleController = TextEditingController(text: title);
+    final subtitleController = TextEditingController(text: subtitle);
     final contentController =
         TextEditingController(text: _contentList[index].content);
 
@@ -1101,7 +1098,7 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
                 controller: titleController,
                 decoration: const InputDecoration(labelText: 'Title'),
               ),
-                TextField(
+              TextField(
                 controller: subtitleController,
                 decoration: const InputDecoration(labelText: 'Subtitle'),
               ),

@@ -66,9 +66,10 @@ class _SearchtermState extends State<Searchterm> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
-              Icons.energy_savings_leaf,
-              color: Colors.green,
+            child: Image.asset(
+              "lib/assets/new degreen ic.png",
+              width: 60,
+              height: 60,
             ),
           ),
         ],

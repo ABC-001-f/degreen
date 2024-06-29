@@ -69,7 +69,6 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-
     double screenWidth = MediaQuery.of(context).size.width;
     String deviceType = "";
     if (screenWidth >= 1200) {
@@ -115,10 +114,11 @@ class _HomePageState extends State<HomePage> {
             surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
             floating: true,
             leading: !_isColumnLayout
-                ? const Icon(
-                    Icons.energy_savings_leaf,
-                    color: Colors.green,
-                    size: 30,
+                ? Image.asset(
+              "lib/assets/new degreen ic.png",
+                    width: 60,
+                    height: 60,
+                    fit: BoxFit.contain,
                   )
                 : const SizedBox(),
             pinned: true,
@@ -216,14 +216,15 @@ class _HomePageState extends State<HomePage> {
   Column standhero({required BuildContext context, required String type}) {
     return Column(
       children: [
-        const SizedBox(
+        SizedBox(
           height: 130,
           width: double.infinity,
           child: Center(
-            child: Icon(
-              Icons.energy_savings_leaf,
-              size: 100,
-              color: Colors.green,
+            child: Image.asset(
+              "lib/assets/new degreen ic.png",
+              width: 100,
+              height: 100,
+              fit: BoxFit.contain,
             ),
           ),
         ),
