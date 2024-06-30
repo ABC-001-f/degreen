@@ -115,7 +115,7 @@ class _HomePageState extends State<HomePage> {
             floating: true,
             leading: !_isColumnLayout
                 ? Image.asset(
-              "lib/assets/new degreen ic.png",
+                    "lib/assets/new degreen ic.png",
                     width: 60,
                     height: 60,
                     fit: BoxFit.contain,

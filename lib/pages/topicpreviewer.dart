@@ -34,6 +34,7 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
       tophide = false,
       _isDescriptionVisible = false,
       outfocus = true,
+      searchactive = false,
       isSpeaking = false;
   List<Content> _contentList = [];
   String sortCriterion = 'date',
@@ -51,10 +52,11 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
   double fontSize = 14.0;
   FlutterTts flutterTts = FlutterTts();
   Widget children = const SizedBox();
+  final TextEditingController _searchController = TextEditingController();
   final _titleController = TextEditingController();
   final _subtitleController = TextEditingController();
   final _contentController = TextEditingController();
-
+  List<Content> _filteredItems = [];
   void saveItem() {
     final title = "${_titleController.text}-::::-${_subtitleController.text}";
     final content = _contentController.text;
@@ -169,6 +171,8 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
     scrollController = ScrollController();
     scrollController.addListener(onScroll);
     _loadContent();
+    _searchController.addListener(filterItems);
+    _filteredItems = _contentList;
   }
 
   @override
@@ -177,6 +181,8 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
     _scrollController.dispose();
     scrollController.removeListener(onScroll);
     scrollController.dispose();
+    _searchController.removeListener(filterItems);
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -212,6 +218,16 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
     }
   }
 
+  void filterItems() {
+    String query = _searchController.text.toLowerCase();
+    setState(() {
+      _filteredItems = _contentList.where((item) {
+        return item.title.toLowerCase().contains(query) ||
+            item.content.toLowerCase().contains(query);
+      }).toList();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     double deviceWidth = MediaQuery.of(context).size.width;
@@ -236,22 +252,44 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text("Saved Items"),
-                    Text(
-                      widget.topic,
-                      style: const TextStyle(fontSize: 14),
-                    ),
+                    searchactive
+                        ? TextField(
+                            controller: _searchController,
+                            decoration: const InputDecoration(
+                              labelText: 'Search',
+                              border: OutlineInputBorder(),
+                            ),
+                          )
+                        : Text(
+                            widget.topic,
+                            style: const TextStyle(fontSize: 14),
+                          ),
                   ],
                 ),
-                actions: const [SizedBox()],
+                actions: [
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          searchactive = !searchactive;
+                        });
+                      },
+                      icon: !searchactive
+                          ? const Icon(Icons.search_rounded)
+                          : const Icon(Icons.close_rounded),
+                    ),
+                  ),
+                ],
               ),
               _contentList.isEmpty
                   ? const SliverFillRemaining(
                       child: Center(child: Text('No items found')),
                     )
                   : SliverList.builder(
-                      itemCount: _contentList.length,
+                      itemCount: _filteredItems.length,
                       itemBuilder: (context, index) {
-                        final content = _contentList[index];
+                        final content = _filteredItems[index];
                         return Itembox(
                           title: content.title,
                           content: content.content,

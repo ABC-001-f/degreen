@@ -13,7 +13,8 @@ class SavedItemsPage extends StatefulWidget {
 class _SavedItemsPageState extends State<SavedItemsPage> {
   List<Content> _contentList = [];
   String _sortCriterion = 'date';
-  bool _ascending = true;
+  bool _ascending = true, searchactive = false;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -102,36 +103,54 @@ class _SavedItemsPageState extends State<SavedItemsPage> {
             ),
           ],
         ),
-        body: _contentList.isEmpty
-            ? const Center(child: Text('No items found'))
-            : Center(
-                child: SingleChildScrollView(
-                  child: Wrap(
-                    alignment: WrapAlignment.center,
-                    runAlignment: WrapAlignment.center,
-                    children: List.generate(
-                      _contentList.length,
-                      (index) {
-                        final content = _contentList[index];
-                        return SizedBox(
-                          width: deviceType == "mobile" ? deviceWidth : 300,
-                          child: Itembox(
-                            title: content.title,
-                            content: content.content,
-                            datetime: content.datetime.toIso8601String(),
-                            edit: () {
-                              _showEditDialog(index);
-                            },
-                            delete: () {
-                              _deleteContent(index);
-                            },
-                          ),
-                        );
-                      },
+        body: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 20, right: 20, top: 12),
+              child: TextField(
+                controller: _searchController,
+                decoration: const InputDecoration(
+                  labelText: 'Search',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(
+                      Radius.circular(15),
                     ),
                   ),
                 ),
-              ));
+              ),
+            ),
+            _contentList.isEmpty
+                ? const Center(child: Text('No items found'))
+                : Center(
+                    child: SingleChildScrollView(
+                      child: Wrap(
+                        alignment: WrapAlignment.center,
+                        runAlignment: WrapAlignment.center,
+                        children: List.generate(
+                          _contentList.length,
+                          (index) {
+                            final content = _contentList[index];
+                            return SizedBox(
+                              width: deviceType == "mobile" ? deviceWidth : 300,
+                              child: Itembox(
+                                title: content.title,
+                                content: content.content,
+                                datetime: content.datetime.toIso8601String(),
+                                edit: () {
+                                  _showEditDialog(index);
+                                },
+                                delete: () {
+                                  _deleteContent(index);
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+          ],
+        ));
   }
 
   void _showEditDialog(int index) {
