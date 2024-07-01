@@ -20,6 +20,13 @@ class _SavedItemsPageState extends State<SavedItemsPage> {
   void initState() {
     super.initState();
     _loadContent();
+    _searchController.addListener(_loadContent);
+  }
+
+  @override
+  void dispose() {
+    _searchController.addListener(_loadContent);
+    super.dispose();
   }
 
   void _loadContent() {
@@ -36,6 +43,15 @@ class _SavedItemsPageState extends State<SavedItemsPage> {
             ? a.datetime.compareTo(b.datetime)
             : b.datetime.compareTo(a.datetime));
       } else if (_sortCriterion == 'title') {
+        _contentList.sort((a, b) => _ascending
+            ? a.title.compareTo(b.title)
+            : b.title.compareTo(a.title));
+      } else if (_sortCriterion == 'search') {
+        String query = _searchController.text.toLowerCase();
+        _contentList = _contentList.where((item) {
+          return item.title.toLowerCase().contains(query) ||
+              item.content.toLowerCase().contains(query);
+        }).toList();
         _contentList.sort((a, b) => _ascending
             ? a.title.compareTo(b.title)
             : b.title.compareTo(a.title));
@@ -77,6 +93,7 @@ class _SavedItemsPageState extends State<SavedItemsPage> {
               onSelected: (value) {
                 setState(() {
                   _sortCriterion = value;
+                  value == "search" ? searchactive = true : searchactive = false;
                   _sortContent();
                 });
               },
@@ -88,6 +105,10 @@ class _SavedItemsPageState extends State<SavedItemsPage> {
                 const PopupMenuItem(
                   value: 'title',
                   child: Text('Sort by Title'),
+                ),
+                const PopupMenuItem(
+                  value: 'search',
+                  child: Text('Sort by Search'),
                 ),
               ],
             ),
@@ -105,20 +126,23 @@ class _SavedItemsPageState extends State<SavedItemsPage> {
         ),
         body: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.only(left: 20, right: 20, top: 12),
-              child: TextField(
-                controller: _searchController,
-                decoration: const InputDecoration(
-                  labelText: 'Search',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(
-                      Radius.circular(15),
+            searchactive
+                ? Padding(
+                    padding:
+                        const EdgeInsets.only(left: 20, right: 20, top: 12),
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: const InputDecoration(
+                        labelText: 'Search',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(15),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              ),
-            ),
+                  )
+                : const SizedBox(),
             _contentList.isEmpty
                 ? const Center(child: Text('No items found'))
                 : Center(
@@ -195,8 +219,10 @@ class _SavedItemsPageState extends State<SavedItemsPage> {
             TextButton(
               child: const Text('Save'),
               onPressed: () {
+                final title =
+                    "${titleController.text}-::::-${subtitleController.text}";
                 _updateContent(
-                    index, titleController.text, contentController.text);
+                    index, title, contentController.text);
                 Navigator.pop(context);
               },
             ),

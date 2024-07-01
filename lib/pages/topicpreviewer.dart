@@ -12,6 +12,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:provider/provider.dart';
 import 'package:translator/translator.dart';
+import 'dart:math' as math;
 
 class Topicpreviewer extends StatefulWidget {
   final String topic;
@@ -35,8 +36,8 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
       _isDescriptionVisible = false,
       outfocus = true,
       searchactive = false,
+      mininput = false,
       isSpeaking = false;
-  List<Content> _contentList = [];
   String sortCriterion = 'date',
       answer = "",
       speakstring = "",
@@ -52,11 +53,23 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
   double fontSize = 14.0;
   FlutterTts flutterTts = FlutterTts();
   Widget children = const SizedBox();
-  final TextEditingController _searchController = TextEditingController();
-  final _titleController = TextEditingController();
-  final _subtitleController = TextEditingController();
-  final _contentController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController(),
+      _titleController = TextEditingController(),
+      _subtitleController = TextEditingController(),
+      _contentController = TextEditingController();
   List<Content> _filteredItems = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
+    scrollController = ScrollController();
+    scrollController.addListener(onScroll);
+    _loadContent();
+    _searchController.addListener(filterItems);
+  }
+
   void saveItem() {
     final title = "${_titleController.text}-::::-${_subtitleController.text}";
     final content = _contentController.text;
@@ -68,8 +81,9 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
       );
       StorageHelper.addContent(newContent);
       StorageHelper.saveContentToFile(newContent);
-      _loadContent();
       Navigator.pop(context);
+      errormsg(context: context, error: 'Item Saved');
+      _loadContent();
     } else {
       errormsg(context: context, error: 'Title and content cannot be empty');
     }
@@ -83,27 +97,19 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
 
   void _loadContent() {
     setState(() {
-      _contentList = StorageHelper.getAllContent();
+      _filteredItems = StorageHelper.getAllContent();
       _sortContent();
     });
   }
 
   void _sortContent() {
     setState(() {
-      if (sortCriterion == 'date') {
-        _contentList.sort((a, b) => ascending
-            ? a.datetime.compareTo(b.datetime)
-            : b.datetime.compareTo(a.datetime));
-      } else if (sortCriterion == 'title') {
-        _contentList.sort((a, b) => ascending
-            ? a.title.compareTo(b.title)
-            : b.title.compareTo(a.title));
-      }
+      _filteredItems.sort((a, b) => a.datetime.compareTo(b.datetime));
     });
   }
 
   void _deleteContent(int index) {
-    final content = _contentList[index];
+    final content = _filteredItems[index];
     StorageHelper.deleteContent(index);
     StorageHelper.deleteContentFromFile(content.datetime);
     _loadContent();
@@ -112,7 +118,7 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
   void _updateContent(int index, String newTitle, String newContent) {
     final updatedContent = Content(
       title: newTitle,
-      datetime: _contentList[index].datetime,
+      datetime: _filteredItems[index].datetime,
       content: newContent,
     );
     StorageHelper.updateContent(index, updatedContent);
@@ -164,18 +170,6 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    _scrollController = ScrollController();
-    _scrollController.addListener(_onScroll);
-    scrollController = ScrollController();
-    scrollController.addListener(onScroll);
-    _loadContent();
-    _searchController.addListener(filterItems);
-    _filteredItems = _contentList;
-  }
-
-  @override
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
@@ -221,7 +215,7 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
   void filterItems() {
     String query = _searchController.text.toLowerCase();
     setState(() {
-      _filteredItems = _contentList.where((item) {
+      _filteredItems = _filteredItems.where((item) {
         return item.title.toLowerCase().contains(query) ||
             item.content.toLowerCase().contains(query);
       }).toList();
@@ -253,11 +247,16 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
                   children: [
                     const Text("Saved Items"),
                     searchactive
-                        ? TextField(
-                            controller: _searchController,
-                            decoration: const InputDecoration(
-                              labelText: 'Search',
-                              border: OutlineInputBorder(),
+                        ? Container(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            height: 50,
+                            child: TextField(
+                              controller: _searchController,
+                              style: const TextStyle(fontSize: 12),
+                              decoration: const InputDecoration(
+                                labelText: 'Search',
+                                border: OutlineInputBorder(),
+                              ),
                             ),
                           )
                         : Text(
@@ -282,7 +281,7 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
                   ),
                 ],
               ),
-              _contentList.isEmpty
+              _filteredItems.isEmpty
                   ? const SliverFillRemaining(
                       child: Center(child: Text('No items found')),
                     )
@@ -860,8 +859,11 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
                                                   wordmean == ""
                                                       ? const SizedBox()
                                                       : Container(
-                                                          width:
-                                                              deviceWidth - 120,
+                                                          width: deviceType ==
+                                                                  "mobile"
+                                                              ? deviceWidth -
+                                                                  120
+                                                              : deviceWidth / 2,
                                                           height: deviceHeight -
                                                               300,
                                                           padding:
@@ -1116,13 +1118,14 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
   }
 
   void _showEditDialog(int index) {
-    List<String> titlesplitter = _contentList[index].title.split("-::::-");
+    List<String> titlesplitter = _filteredItems[index].title.split("-::::-");
+
     String title = titlesplitter[0];
     String subtitle = titlesplitter[1];
-    final titleController = TextEditingController(text: title);
-    final subtitleController = TextEditingController(text: subtitle);
-    final contentController =
-        TextEditingController(text: _contentList[index].content);
+    final titleController = TextEditingController(text: title),
+        subtitleController = TextEditingController(text: subtitle),
+        contentController =
+            TextEditingController(text: _filteredItems[index].content);
 
     showDialog(
       context: context,
@@ -1155,11 +1158,13 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
               },
             ),
             TextButton(
-              child: const Text('Save'),
+              child: const Text('Update'),
               onPressed: () {
-                _updateContent(
-                    index, titleController.text, contentController.text);
+                final title =
+                    "${titleController.text}-::::-${subtitleController.text}";
+                _updateContent(index, title, contentController.text);
                 Navigator.pop(context);
+                errormsg(context: context, error: "Item Updated!");
               },
             ),
           ],
@@ -1258,8 +1263,11 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
       TextSpan(children: textspans),
       onSelectionChanged: (TextSelection selection, SelectionChangedCause? _) {
         if (selection.baseOffset != selection.extentOffset) {
-          selectedText = selectiondata.substring(
-              selection.baseOffset, selection.extentOffset);
+          final start = math.min(selection.baseOffset, selection.extentOffset);
+          final end = math.max(selection.baseOffset, selection.extentOffset);
+          selectedText = selectiondata.substring(start, end);
+          // selectedText = selectiondata.substring(
+          //     selection.baseOffset, selection.extentOffset);
           outfocus = false;
           setState(() {});
         } else if (_ == SelectionChangedCause.tap) {
