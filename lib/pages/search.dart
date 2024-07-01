@@ -53,9 +53,12 @@ class _SearchtermState extends State<Searchterm> {
     }
     return Scaffold(
       appBar: AppBar(
-        leading: GestureDetector(
-          onTap: () => Navigator.of(context).pop(),
-          child: const Icon(Icons.chevron_left),
+        leading: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            onTap: () => Navigator.of(context).pop(),
+            child: const Icon(Icons.chevron_left),
+          ),
         ),
         title: const Text("Search"),
         actions: [
@@ -125,74 +128,77 @@ class _SearchtermState extends State<Searchterm> {
     );
   }
 
-  GestureDetector topics({
+  MouseRegion topics({
     required IconData icon,
     required String topic,
     required String subcontent,
     required List<dynamic> descriptions,
     required String type,
   }) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.of(context).push(MaterialPageRoute(
-          builder: (context) => Topicpreviewer(
-            topic: topic,
-            descriptions: descriptions,
-            icondata: icon,
-          ),
-        ));
-      },
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        margin: const EdgeInsets.symmetric(
-          horizontal: 8,
-          vertical: 6,
-        ),
-        width: type == "h" ? 300 : double.infinity,
-        decoration: BoxDecoration(
-          color: Theme.of(context).splashColor,
-          border: Border.all(
-            width: 5,
-            color: Theme.of(context).hoverColor,
-          ),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Theme.of(context).hoverColor,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                icon,
-                color: Colors.white,
-              ),
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () {
+          Navigator.of(context).push(MaterialPageRoute(
+            builder: (context) => Topicpreviewer(
+              topic: topic,
+              descriptions: descriptions,
+              icondata: icon,
             ),
-            const SizedBox(
-              width: 12,
+          ));
+        },
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          margin: const EdgeInsets.symmetric(
+            horizontal: 8,
+            vertical: 6,
+          ),
+          width: type == "h" ? 300 : double.infinity,
+          decoration: BoxDecoration(
+            color: Theme.of(context).splashColor,
+            border: Border.all(
+              width: 5,
+              color: Theme.of(context).hoverColor,
             ),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    topic,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    subcontent,
-                    style: const TextStyle(
-                      fontSize: 9,
-                    ),
-                  ),
-                ],
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).hoverColor,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  color: Colors.white,
+                ),
               ),
-            )
-          ],
+              const SizedBox(
+                width: 12,
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      topic,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      subcontent,
+                      style: const TextStyle(
+                        fontSize: 9,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            ],
+          ),
         ),
       ),
     );

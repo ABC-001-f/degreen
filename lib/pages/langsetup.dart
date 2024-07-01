@@ -11,15 +11,17 @@ class Langsetup extends StatefulWidget {
 }
 
 class _LangsetupState extends State<Langsetup> {
-
   @override
   Widget build(BuildContext context) {
     final settingsProvider = Provider.of<SettingsProvider>(context);
     return Scaffold(
       appBar: AppBar(
-        leading: GestureDetector(
-          onTap: () => Navigator.of(context).pop(),
-          child: const Icon(Icons.chevron_left),
+        leading: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            onTap: () => Navigator.of(context).pop(),
+            child: const Icon(Icons.chevron_left),
+          ),
         ),
         title: const Text("Set Language"),
         centerTitle: true,
@@ -45,13 +47,13 @@ class _LangsetupState extends State<Langsetup> {
               settingsProvider.setLang(Topics().languages[index]['code']!);
               Navigator.pop(context);
             },
-            trailing:
-                settingsProvider.settings.language == Topics().languages[index]['code']!
-                    ? const Icon(
-                        Icons.check_circle_rounded,
-                        color: Colors.green,
-                      )
-                    : const SizedBox(),
+            trailing: settingsProvider.settings.language ==
+                    Topics().languages[index]['code']!
+                ? const Icon(
+                    Icons.check_circle_rounded,
+                    color: Colors.green,
+                  )
+                : const SizedBox(),
           );
         },
       ),

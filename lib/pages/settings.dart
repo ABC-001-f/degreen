@@ -33,9 +33,12 @@ class _SettingspageState extends State<Settingspage> {
     }
     return Scaffold(
         appBar: AppBar(
-          leading: GestureDetector(
-            onTap: () => Navigator.of(context).pop(),
-            child: const Icon(Icons.chevron_left),
+          leading: MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: () => Navigator.of(context).pop(),
+              child: const Icon(Icons.chevron_left),
+            ),
           ),
           title: const Text("Settings"),
           centerTitle: true,
@@ -137,55 +140,61 @@ class _SettingspageState extends State<Settingspage> {
         ),
         type: type,
       ),
-      GestureDetector(
-        onTap: () {
-          Navigator.of(context).push(MaterialPageRoute(
-            builder: (context) => const Langsetup(),
-          ));
-        },
-        child: boxcontainer(
-          context: context,
-          child: Column(
-            children: [
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "Language",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
+      MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: () {
+            Navigator.of(context).push(MaterialPageRoute(
+              builder: (context) => const Langsetup(),
+            ));
+          },
+          child: boxcontainer(
+            context: context,
+            child: Column(
+              children: [
+                const Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "Language",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8),
-                    child: Icon(Icons.language),
-                  )
-                ],
-              ),
-              const Divider(
-                color: Colors.grey,
-              ),
-              SizedBox(
-                  width: double.infinity,
-                  child: Text(
-                    namelang,
-                  ))
-            ],
+                    Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: Icon(Icons.language),
+                    )
+                  ],
+                ),
+                const Divider(
+                  color: Colors.grey,
+                ),
+                SizedBox(
+                    width: double.infinity,
+                    child: Text(
+                      namelang,
+                    ))
+              ],
+            ),
+            type: type,
           ),
-          type: type,
         ),
       ),
-      GestureDetector(
-        onTap: () {
-          settingsProvider.resetAll();
-        },
-        child: boxcontainer(
-          context: context,
-          child: const Text(
-            "Reset to default",
-            textAlign: TextAlign.center,
+      MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: () {
+            settingsProvider.resetAll();
+          },
+          child: boxcontainer(
+            context: context,
+            child: const Text(
+              "Reset to default",
+              textAlign: TextAlign.center,
+            ),
+            type: 'm',
           ),
-          type: 'm',
         ),
       ),
       boxcontainer(

@@ -26,7 +26,7 @@ class _ItemboxState extends State<Itembox> {
     List<String> titlesplitter = widget.title.split("-::::-");
     String title = titlesplitter[0];
     String subtitle = titlesplitter[1];
-     String isoDate = widget.datetime;
+    String isoDate = widget.datetime;
     DateTime dateTime = DateTime.parse(isoDate);
 
     String formattedDate = DateFormat('MMMM dd, yyyy').format(dateTime);
@@ -78,7 +78,7 @@ class _ItemboxState extends State<Itembox> {
               children: [
                 Expanded(
                   child: Text(
-                   "$formattedDate . $formattedTime",
+                    "$formattedDate . $formattedTime",
                     style: const TextStyle(
                       fontSize: 15,
                     ),
@@ -86,29 +86,35 @@ class _ItemboxState extends State<Itembox> {
                 ),
                 Row(
                   children: [
-                    GestureDetector(
-                      onTap: widget.edit,
-                      child: Container(
-                        padding: const EdgeInsets.all(5),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).splashColor,
-                          borderRadius: BorderRadius.circular(12),
+                    MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        onTap: widget.edit,
+                        child: Container(
+                          padding: const EdgeInsets.all(5),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).splashColor,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.edit),
                         ),
-                        child: const Icon(Icons.edit),
                       ),
                     ),
                     const SizedBox(
                       width: 12,
                     ),
-                    GestureDetector(
-                      onTap: widget.delete,
-                      child: Container(
-                        padding: const EdgeInsets.all(5),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(12),
+                    MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        onTap: widget.delete,
+                        child: Container(
+                          padding: const EdgeInsets.all(5),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.delete_forever),
                         ),
-                        child: const Icon(Icons.delete_forever),
                       ),
                     ),
                   ],

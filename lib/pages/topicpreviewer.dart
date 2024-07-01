@@ -337,63 +337,73 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      leftpanel = !leftpanel;
-                                    });
-                                  },
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
+                                MouseRegion(
+                                  cursor: SystemMouseCursors.click,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        leftpanel = !leftpanel;
+                                      });
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                        child: const Icon(
+                                          Icons.chevron_left_rounded,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                MouseRegion(
+                                  cursor: SystemMouseCursors.click,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      Navigator.pop(context);
+                                    },
                                     child: Container(
                                       padding: const EdgeInsets.all(12),
+                                      margin: const EdgeInsets.symmetric(
+                                          vertical: 12),
                                       decoration: BoxDecoration(
+                                        color: Colors.green,
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: const Icon(
-                                        Icons.chevron_left_rounded,
-                                        color: Colors.grey,
+                                        Icons.home,
+                                        color: Colors.white,
                                       ),
                                     ),
                                   ),
                                 ),
-                                GestureDetector(
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.all(12),
-                                    margin: const EdgeInsets.symmetric(
-                                        vertical: 12),
-                                    decoration: BoxDecoration(
-                                      color: Colors.green,
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: const Icon(
-                                      Icons.home,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                                GestureDetector(
-                                  onTap: () {
-                                    active = 0;
-                                    answer = "";
-                                    setState(() {});
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.all(12),
-                                    margin: const EdgeInsets.symmetric(
-                                        vertical: 12),
-                                    decoration: BoxDecoration(
-                                      color: active == 0
-                                          ? Colors.green
-                                          : Theme.of(context).splashColor,
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: const Icon(
-                                      Icons.list_rounded,
-                                      color: Colors.white,
+                                MouseRegion(
+                                  cursor: SystemMouseCursors.click,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      active = 0;
+                                      answer = "";
+                                      setState(() {});
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.all(12),
+                                      margin: const EdgeInsets.symmetric(
+                                          vertical: 12),
+                                      decoration: BoxDecoration(
+                                        color: active == 0
+                                            ? Colors.green
+                                            : Theme.of(context).splashColor,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: const Icon(
+                                        Icons.list_rounded,
+                                        color: Colors.white,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -428,17 +438,21 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
                                                     padding:
                                                         const EdgeInsets.all(
                                                             8.0),
-                                                    child: GestureDetector(
-                                                      onTap: () {
-                                                        setState(() {
-                                                          leftpanel =
-                                                              !leftpanel;
-                                                        });
-                                                      },
-                                                      child: const Icon(
-                                                        Icons
-                                                            .space_dashboard_rounded,
-                                                        color: Colors.grey,
+                                                    child: MouseRegion(
+                                                      cursor: SystemMouseCursors
+                                                          .click,
+                                                      child: GestureDetector(
+                                                        onTap: () {
+                                                          setState(() {
+                                                            leftpanel =
+                                                                !leftpanel;
+                                                          });
+                                                        },
+                                                        child: const Icon(
+                                                          Icons
+                                                              .space_dashboard_rounded,
+                                                          color: Colors.grey,
+                                                        ),
                                                       ),
                                                     ),
                                                   ),
@@ -610,8 +624,7 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
                                               CrossAxisAlignment.end,
                                           children: [
                                             Wrap(
-                                              alignment:
-                                                  WrapAlignment.end,
+                                              alignment: WrapAlignment.end,
                                               children: [
                                                 settingsProvider.settings
                                                             .language ==
@@ -1418,65 +1431,68 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
   ) {
     return List.generate(
       widget.descriptions.length,
-      (index) => GestureDetector(
-        onTap: () async {
-          getContent(
-            type: 'main',
-            index: index,
-            settingsProvider: settingsProvider,
-          );
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            vertical: 12,
-            horizontal: 8,
-          ),
-          width: s == "m" ? double.infinity : 300,
-          margin: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: index % 2 == 0
-                ? Theme.of(context).hoverColor
-                : Theme.of(context).splashColor,
-            borderRadius: BorderRadius.circular(12),
-            border: const Border(
-              right: BorderSide(
-                color: Colors.green,
-                width: 4,
+      (index) => MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: () async {
+            getContent(
+              type: 'main',
+              index: index,
+              settingsProvider: settingsProvider,
+            );
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              vertical: 12,
+              horizontal: 8,
+            ),
+            width: s == "m" ? double.infinity : 300,
+            margin: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: index % 2 == 0
+                  ? Theme.of(context).hoverColor
+                  : Theme.of(context).splashColor,
+              borderRadius: BorderRadius.circular(12),
+              border: const Border(
+                right: BorderSide(
+                  color: Colors.green,
+                  width: 4,
+                ),
               ),
             ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: index + 1 >= 10
-                    ? const EdgeInsets.all(15)
-                    : const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 15,
-                      ),
-                margin: const EdgeInsets.only(
-                  top: 10,
-                  bottom: 10,
-                  left: 12,
+            child: Row(
+              children: [
+                Container(
+                  padding: index + 1 >= 10
+                      ? const EdgeInsets.all(15)
+                      : const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 15,
+                        ),
+                  margin: const EdgeInsets.only(
+                    top: 10,
+                    bottom: 10,
+                    left: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black38,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    (index + 1).toString(),
+                    style: const TextStyle(color: Colors.white),
+                  ),
                 ),
-                decoration: BoxDecoration(
-                  color: Colors.black38,
-                  borderRadius: BorderRadius.circular(12),
+                const SizedBox(
+                  width: 8,
                 ),
-                child: Text(
-                  (index + 1).toString(),
-                  style: const TextStyle(color: Colors.white),
+                Expanded(
+                  child: Text(
+                    widget.descriptions[index],
+                  ),
                 ),
-              ),
-              const SizedBox(
-                width: 8,
-              ),
-              Expanded(
-                child: Text(
-                  widget.descriptions[index],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
