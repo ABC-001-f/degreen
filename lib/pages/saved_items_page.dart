@@ -66,14 +66,25 @@ class _SavedItemsPageState extends State<SavedItemsPage> {
     _loadContent();
   }
 
-  void _updateContent(int index, String newTitle, String newContent) {
-    final updatedContent = Content(
-      title: newTitle,
-      datetime: _contentList[index].datetime,
-      content: newContent,
-    );
-    StorageHelper.updateContent(index, updatedContent);
-    _loadContent();
+  void _updateContent(int index, String newTitle, String oldtitle,
+      String oldsubtitle, String newContent) {
+    if (oldtitle.isNotEmpty &&
+        oldsubtitle.isNotEmpty &&
+        newContent.isNotEmpty) {
+      final updatedContent = Content(
+        title: newTitle,
+        datetime: _contentList[index].datetime,
+        content: newContent,
+      );
+      StorageHelper.updateContent(index, updatedContent);
+      _loadContent();
+      Navigator.pop(context);
+      errormsg(context: context, error: "Item Updated!");
+    } else {
+      errormsg(
+          context: context,
+          error: 'Title, Subtitle and content cannot be empty');
+    }
   }
 
   @override
@@ -93,7 +104,9 @@ class _SavedItemsPageState extends State<SavedItemsPage> {
               onSelected: (value) {
                 setState(() {
                   _sortCriterion = value;
-                  value == "search" ? searchactive = true : searchactive = false;
+                  value == "search"
+                      ? searchactive = true
+                      : searchactive = false;
                   _sortContent();
                 });
               },
@@ -217,18 +230,25 @@ class _SavedItemsPageState extends State<SavedItemsPage> {
               },
             ),
             TextButton(
-              child: const Text('Save'),
+              child: const Text('Update'),
               onPressed: () {
                 final title =
                     "${titleController.text}-::::-${subtitleController.text}";
-                _updateContent(
-                    index, title, contentController.text);
-                Navigator.pop(context);
+                _updateContent(index, title, titleController.text,
+                    subtitleController.text, contentController.text);
               },
             ),
           ],
         );
       },
     );
+  }
+
+  void errormsg({required BuildContext context, required String error}) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(
+      error,
+      textAlign: TextAlign.center,
+    )));
   }
 }

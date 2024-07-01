@@ -73,7 +73,9 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
   void saveItem() {
     final title = "${_titleController.text}-::::-${_subtitleController.text}";
     final content = _contentController.text;
-    if (title.isNotEmpty && content.isNotEmpty) {
+    if (_titleController.text.isNotEmpty &&
+        _subtitleController.text.isNotEmpty &&
+        content.isNotEmpty) {
       final newContent = Content(
         title: title,
         datetime: DateTime.now(),
@@ -85,7 +87,9 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
       errormsg(context: context, error: 'Item Saved');
       _loadContent();
     } else {
-      errormsg(context: context, error: 'Title and content cannot be empty');
+      errormsg(
+          context: context,
+          error: 'Title, Subtitle and content cannot be empty');
     }
   }
 
@@ -115,14 +119,26 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
     _loadContent();
   }
 
-  void _updateContent(int index, String newTitle, String newContent) {
-    final updatedContent = Content(
-      title: newTitle,
-      datetime: _filteredItems[index].datetime,
-      content: newContent,
-    );
-    StorageHelper.updateContent(index, updatedContent);
-    _loadContent();
+  void _updateContent(int index, String newTitle, String oldtitle,
+      String oldsubtitle, String newContent) {
+    if (oldtitle.isNotEmpty &&
+        oldsubtitle.isNotEmpty &&
+        newContent.isNotEmpty) {
+      final updatedContent = Content(
+        title: newTitle,
+        datetime: _filteredItems[index].datetime,
+        content: newContent,
+      );
+      StorageHelper.updateContent(index, updatedContent);
+      _loadContent();
+
+      Navigator.pop(context);
+      errormsg(context: context, error: "Item Updated!");
+    } else {
+      errormsg(
+          context: context,
+          error: 'Title, Subtitle and content cannot be empty');
+    }
   }
 
   void resetFontSize() {
@@ -679,12 +695,11 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
                                                                     to: 'en');
                                                         wordmean =
                                                             translated.text;
-
                                                         wordmean =
                                                             await Topics()
                                                                 .usingGermini(
                                                           what:
-                                                              " give me short meaning of $selectedText represent it in a matured way",
+                                                              " give me short meaning of $wordmean represent it in a matured way",
                                                         );
                                                         if (!wordmean.contains(
                                                             "Error")) {
@@ -1162,9 +1177,8 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
               onPressed: () {
                 final title =
                     "${titleController.text}-::::-${subtitleController.text}";
-                _updateContent(index, title, contentController.text);
-                Navigator.pop(context);
-                errormsg(context: context, error: "Item Updated!");
+                _updateContent(index, title, titleController.text,
+                    subtitleController.text, contentController.text);
               },
             ),
           ],

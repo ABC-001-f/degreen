@@ -25,7 +25,7 @@ class _ItemboxState extends State<Itembox> {
   Widget build(BuildContext context) {
     List<String> titlesplitter = widget.title.split("-::::-");
     String title = titlesplitter[0];
-    String subtitle = titlesplitter[0];
+    String subtitle = titlesplitter[1];
      String isoDate = widget.datetime;
     DateTime dateTime = DateTime.parse(isoDate);
 
