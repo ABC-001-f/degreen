@@ -1,5 +1,5 @@
 name: degreen
-description: "Helping nature."
+description: "Helping And Conserving Nature."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -48,6 +48,7 @@ dependencies:
   hive_flutter: ^1.1.0
   flutter_dotenv: ^5.1.0
   intl: ^0.19.0
+  bitsdojo_window: ^0.1.5
 
 
   

@@ -86,7 +86,7 @@ class _ItemboxState extends State<Itembox> {
                 ),
                 Row(
                   children: [
-                    InkWell(
+                    GestureDetector(
                       onTap: widget.edit,
                       child: Container(
                         padding: const EdgeInsets.all(5),
@@ -100,7 +100,7 @@ class _ItemboxState extends State<Itembox> {
                     const SizedBox(
                       width: 12,
                     ),
-                    InkWell(
+                    GestureDetector(
                       onTap: widget.delete,
                       child: Container(
                         padding: const EdgeInsets.all(5),

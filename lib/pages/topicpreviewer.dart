@@ -337,14 +337,12 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                InkWell(
+                                GestureDetector(
                                   onTap: () {
                                     setState(() {
                                       leftpanel = !leftpanel;
                                     });
                                   },
-                                  hoverColor: Colors.transparent,
-                                  splashColor: Colors.transparent,
                                   child: Padding(
                                     padding: const EdgeInsets.all(8.0),
                                     child: Container(
@@ -359,12 +357,10 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
                                     ),
                                   ),
                                 ),
-                                InkWell(
+                                GestureDetector(
                                   onTap: () {
                                     Navigator.pop(context);
                                   },
-                                  hoverColor: Colors.transparent,
-                                  splashColor: Colors.transparent,
                                   child: Container(
                                     padding: const EdgeInsets.all(12),
                                     margin: const EdgeInsets.symmetric(
@@ -379,14 +375,12 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
                                     ),
                                   ),
                                 ),
-                                InkWell(
+                                GestureDetector(
                                   onTap: () {
                                     active = 0;
                                     answer = "";
                                     setState(() {});
                                   },
-                                  hoverColor: Colors.transparent,
-                                  splashColor: Colors.transparent,
                                   child: Container(
                                     padding: const EdgeInsets.all(12),
                                     margin: const EdgeInsets.symmetric(
@@ -434,17 +428,13 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
                                                     padding:
                                                         const EdgeInsets.all(
                                                             8.0),
-                                                    child: InkWell(
+                                                    child: GestureDetector(
                                                       onTap: () {
                                                         setState(() {
                                                           leftpanel =
                                                               !leftpanel;
                                                         });
                                                       },
-                                                      hoverColor:
-                                                          Colors.transparent,
-                                                      splashColor:
-                                                          Colors.transparent,
                                                       child: const Icon(
                                                         Icons
                                                             .space_dashboard_rounded,
@@ -1428,7 +1418,7 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
   ) {
     return List.generate(
       widget.descriptions.length,
-      (index) => InkWell(
+      (index) => GestureDetector(
         onTap: () async {
           getContent(
             type: 'main',
@@ -1436,8 +1426,6 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
             settingsProvider: settingsProvider,
           );
         },
-        hoverColor: Colors.transparent,
-        splashColor: Colors.transparent,
         child: Container(
           padding: const EdgeInsets.symmetric(
             vertical: 12,

@@ -53,10 +53,8 @@ class _SearchtermState extends State<Searchterm> {
     }
     return Scaffold(
       appBar: AppBar(
-        leading: InkWell(
+        leading: GestureDetector(
           onTap: () => Navigator.of(context).pop(),
-          hoverColor: Colors.transparent,
-          splashColor: Colors.transparent,
           child: const Icon(Icons.chevron_left),
         ),
         title: const Text("Search"),
@@ -127,14 +125,14 @@ class _SearchtermState extends State<Searchterm> {
     );
   }
 
-  InkWell topics({
+  GestureDetector topics({
     required IconData icon,
     required String topic,
     required String subcontent,
     required List<dynamic> descriptions,
     required String type,
   }) {
-    return InkWell(
+    return GestureDetector(
       onTap: () {
         Navigator.of(context).push(MaterialPageRoute(
           builder: (context) => Topicpreviewer(
@@ -144,8 +142,6 @@ class _SearchtermState extends State<Searchterm> {
           ),
         ));
       },
-      hoverColor: Colors.transparent,
-      splashColor: Colors.transparent,
       child: Container(
         padding: const EdgeInsets.all(8),
         margin: const EdgeInsets.symmetric(

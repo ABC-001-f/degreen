@@ -124,14 +124,12 @@ class _HomePageState extends State<HomePage> {
             pinned: true,
             actions: !_isColumnLayout
                 ? [
-                    InkWell(
+                    GestureDetector(
                       onTap: () {
                         Navigator.of(context).push(MaterialPageRoute(
                           builder: (context) => const Searchterm(),
                         ));
                       },
-                      hoverColor: Colors.transparent,
-                      splashColor: Colors.transparent,
                       child: Container(
                         padding: const EdgeInsets.all(9),
                         margin: const EdgeInsets.only(right: 12),
@@ -252,15 +250,13 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  InkWell searchbar(BuildContext context) {
-    return InkWell(
+  GestureDetector searchbar(BuildContext context) {
+    return GestureDetector(
       onTap: () {
         Navigator.of(context).push(MaterialPageRoute(
           builder: (context) => const Searchterm(),
         ));
       },
-      hoverColor: Colors.transparent,
-      splashColor: Colors.transparent,
       child: Container(
         padding: const EdgeInsets.all(12),
         width: 180,
@@ -285,14 +281,14 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  InkWell topics({
+  GestureDetector topics({
     required IconData icon,
     required String topic,
     required String subcontent,
     required List<dynamic> descriptions,
     required String type,
   }) {
-    return InkWell(
+    return GestureDetector(
       onTap: () {
         Navigator.of(context).push(MaterialPageRoute(
           builder: (context) => Topicpreviewer(
@@ -302,8 +298,6 @@ class _HomePageState extends State<HomePage> {
           ),
         ));
       },
-      hoverColor: Colors.transparent,
-      splashColor: Colors.transparent,
       child: Container(
         padding: const EdgeInsets.all(8),
         margin: const EdgeInsets.symmetric(

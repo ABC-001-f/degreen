@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:bitsdojo_window/bitsdojo_window.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -12,6 +13,13 @@ Future<void> main() async {
   await dotenv.load(fileName: '.env');
   await StorageHelper.init();
   runApp(const MyApp());
+  doWhenWindowReady(() {
+    const initialSize = Size(500, 450);
+    appWindow.minSize = initialSize;
+    appWindow.size = const Size(1000, 560);
+    appWindow.alignment = Alignment.center;
+    appWindow.show();
+  });
 }
 
 class MyApp extends StatelessWidget {

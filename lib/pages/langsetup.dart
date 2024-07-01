@@ -17,7 +17,7 @@ class _LangsetupState extends State<Langsetup> {
     final settingsProvider = Provider.of<SettingsProvider>(context);
     return Scaffold(
       appBar: AppBar(
-        leading: InkWell(
+        leading: GestureDetector(
           onTap: () => Navigator.of(context).pop(),
           child: const Icon(Icons.chevron_left),
         ),

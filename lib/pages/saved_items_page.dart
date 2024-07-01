@@ -97,69 +97,66 @@ class _SavedItemsPageState extends State<SavedItemsPage> {
       deviceType = 'mobile';
     }
     return Scaffold(
-        appBar: AppBar(
-          title: const Text('Saved Items'),
-          actions: [
-            PopupMenuButton<String>(
-              onSelected: (value) {
-                setState(() {
-                  _sortCriterion = value;
-                  value == "search"
-                      ? searchactive = true
-                      : searchactive = false;
-                  _sortContent();
-                });
-              },
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'date',
-                  child: Text('Sort by Date'),
-                ),
-                const PopupMenuItem(
-                  value: 'title',
-                  child: Text('Sort by Title'),
-                ),
-                const PopupMenuItem(
-                  value: 'search',
-                  child: Text('Sort by Search'),
-                ),
-              ],
-            ),
-            IconButton(
-              icon:
-                  Icon(_ascending ? Icons.arrow_upward : Icons.arrow_downward),
-              onPressed: () {
-                setState(() {
-                  _ascending = !_ascending;
-                  _sortContent();
-                });
-              },
-            ),
-          ],
-        ),
-        body: Column(
-          children: [
-            searchactive
-                ? Padding(
-                    padding:
-                        const EdgeInsets.only(left: 20, right: 20, top: 12),
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: const InputDecoration(
-                        labelText: 'Search',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(
-                            Radius.circular(15),
-                          ),
+      appBar: AppBar(
+        title: const Text('Saved Items'),
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              setState(() {
+                _sortCriterion = value;
+                value == "search" ? searchactive = true : searchactive = false;
+                _sortContent();
+              });
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'date',
+                child: Text('Sort by Date'),
+              ),
+              const PopupMenuItem(
+                value: 'title',
+                child: Text('Sort by Title'),
+              ),
+              const PopupMenuItem(
+                value: 'search',
+                child: Text('Sort by Search'),
+              ),
+            ],
+          ),
+          IconButton(
+            icon: Icon(_ascending ? Icons.arrow_upward : Icons.arrow_downward),
+            onPressed: () {
+              setState(() {
+                _ascending = !_ascending;
+                _sortContent();
+              });
+            },
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          searchactive
+              ? Padding(
+                  padding: const EdgeInsets.only(left: 20, right: 20, top: 12),
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: const InputDecoration(
+                      labelText: 'Search',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(
+                          Radius.circular(15),
                         ),
                       ),
                     ),
-                  )
-                : const SizedBox(),
-            _contentList.isEmpty
-                ? const Center(child: Text('No items found'))
-                : Center(
-                    child: SingleChildScrollView(
+                  ),
+                )
+              : const SizedBox(),
+          Expanded(
+            child: Center(
+              child: _contentList.isEmpty
+                  ? const Center(child: Text('No items found'))
+                  : SingleChildScrollView(
                       child: Wrap(
                         alignment: WrapAlignment.center,
                         runAlignment: WrapAlignment.center,
@@ -185,9 +182,11 @@ class _SavedItemsPageState extends State<SavedItemsPage> {
                         ),
                       ),
                     ),
-                  ),
-          ],
-        ));
+            ),
+          )
+        ],
+      ),
+    );
   }
 
   void _showEditDialog(int index) {

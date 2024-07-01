@@ -32,44 +32,41 @@ class _SettingspageState extends State<Settingspage> {
       }
     }
     return Scaffold(
-      appBar: AppBar(
-        leading: InkWell(
-          onTap: () => Navigator.of(context).pop(),
-          hoverColor: Colors.transparent,
-          splashColor: Colors.transparent,
-          child: const Icon(Icons.chevron_left),
-        ),
-        title: const Text("Settings"),
-        centerTitle: true,
-        actions: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Image.asset(
-              "lib/assets/new degreen ic.png",
-              width: 60,
-              height: 60,
-              fit: BoxFit.contain,
-            ),
+        appBar: AppBar(
+          leading: GestureDetector(
+            onTap: () => Navigator.of(context).pop(),
+            child: const Icon(Icons.chevron_left),
           ),
-        ],
-      ),
-      body: deviceType == "mobile"
-          ? SingleChildScrollView(
-              child: Column(
-                children: lister(settingsProvider, "m"),
+          title: const Text("Settings"),
+          centerTitle: true,
+          actions: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
               ),
-            )
-          : Center(
-              child: Wrap(
-                alignment: WrapAlignment.center,
-                runAlignment: WrapAlignment.center,
-                children: lister(settingsProvider, "h"),
+              child: Image.asset(
+                "lib/assets/new degreen ic.png",
+                width: 60,
+                height: 60,
+                fit: BoxFit.contain,
               ),
             ),
-    );
+          ],
+        ),
+        body: Center(
+          child: SingleChildScrollView(
+            child: deviceType == "mobile"
+                ? Column(
+                    children: lister(settingsProvider, "m"),
+                  )
+                : Wrap(
+                    alignment: WrapAlignment.center,
+                    runAlignment: WrapAlignment.center,
+                    children: lister(settingsProvider, "h"),
+                  ),
+          ),
+        ));
   }
 
   List<Widget> lister(settingsProvider, String type) {
@@ -98,9 +95,11 @@ class _SettingspageState extends State<Settingspage> {
             const Divider(
               color: Colors.grey,
             ),
-            const Row(
-              children: [Text("Switch themes to your desired taste")],
-            )
+            const SizedBox(
+                width: double.infinity,
+                child: Text(
+                  "Switch themes to your desired taste",
+                ))
           ],
         ),
         type: type,
@@ -129,21 +128,21 @@ class _SettingspageState extends State<Settingspage> {
             const Divider(
               color: Colors.grey,
             ),
-            const Row(
-              children: [Text("Voice when reading to you")],
-            )
+            const SizedBox(
+                width: double.infinity,
+                child: Text(
+                  "Voice when reading to you",
+                ))
           ],
         ),
         type: type,
       ),
-      InkWell(
+      GestureDetector(
         onTap: () {
           Navigator.of(context).push(MaterialPageRoute(
             builder: (context) => const Langsetup(),
           ));
         },
-        hoverColor: Colors.transparent,
-        splashColor: Colors.transparent,
         child: boxcontainer(
           context: context,
           child: Column(
@@ -166,20 +165,20 @@ class _SettingspageState extends State<Settingspage> {
               const Divider(
                 color: Colors.grey,
               ),
-              Row(
-                children: [Text(namelang)],
-              )
+              SizedBox(
+                  width: double.infinity,
+                  child: Text(
+                    namelang,
+                  ))
             ],
           ),
           type: type,
         ),
       ),
-      InkWell(
+      GestureDetector(
         onTap: () {
           settingsProvider.resetAll();
         },
-        hoverColor: Colors.transparent,
-        splashColor: Colors.transparent,
         child: boxcontainer(
           context: context,
           child: const Text(
@@ -213,8 +212,11 @@ class _SettingspageState extends State<Settingspage> {
             const Divider(
               color: Colors.grey,
             ),
-            const Text(
-              "your informative, comprehensive, and ever-evolving AI companion.",
+            const SizedBox(
+              width: double.infinity,
+              child: Text(
+                "your informative, comprehensive, and ever-evolving AI companion.",
+              ),
             )
           ],
         ),
