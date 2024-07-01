@@ -619,9 +619,9 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
                                           crossAxisAlignment:
                                               CrossAxisAlignment.end,
                                           children: [
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.end,
+                                            Wrap(
+                                              alignment:
+                                                  WrapAlignment.end,
                                               children: [
                                                 settingsProvider.settings
                                                             .language ==
