@@ -60,6 +60,7 @@ class _ChatZoneState extends State<ChatZone> {
       replyactivated = false,
       activesearch = false,
       activesend = false,
+      checkingpromptdone = true,
       endreachedinscrol = true,
       loadingspeachall = false,
       isSpeaking = false;
@@ -83,31 +84,33 @@ class _ChatZoneState extends State<ChatZone> {
     super.dispose();
   }
 
- void _startPeriodicRequest() {
-    _timer = Timer.periodic(_duration, (Timer timer) async {
-      try {
-        final response = await http.get(Uri.parse(_url));
-        if (response.statusCode == 200) {
-          if (mounted) { // Check if the widget is still mounted
-            setState(() {
-              _status = 'Online now';
-            });
+  void _startPeriodicRequest() {
+    if (!activesend) {
+      _timer = Timer.periodic(_duration, (Timer timer) async {
+        try {
+          final response = await http.get(Uri.parse(_url));
+          if (response.statusCode == 200) {
+            if (mounted) {
+              setState(() {
+                _status = 'Available now';
+              });
+            }
+          } else {
+            if (mounted) {
+              setState(() {
+                _status = 'Offline now';
+              });
+            }
           }
-        } else {
-          if (mounted) { // Check if the widget is still mounted
+        } catch (e) {
+          if (mounted) {
             setState(() {
               _status = 'Offline now';
             });
           }
         }
-      } catch (e) {
-        if (mounted) { // Check if the widget is still mounted
-          setState(() {
-            _status = 'Offline now';
-          });
-        }
-      }
-    });
+      });
+    }
   }
 
   void _loadContent() {
@@ -1405,7 +1408,7 @@ class _ChatZoneState extends State<ChatZone> {
             ),
           ),
         ),
-        response == "loading"
+        !checkingpromptdone
             ? typing()
             : MouseRegion(
                 cursor: SystemMouseCursors.click,
@@ -1413,6 +1416,9 @@ class _ChatZoneState extends State<ChatZone> {
                   onTap: () async {
                     if (chatController.text != "" &&
                         chatController.text != " ") {
+                      setState(() {
+                        checkingpromptdone = false;
+                      });
                       if (replyactivated) {
                         int whichid = replyid == 0 ? respondreplyid : replyid;
                         var chat = chats
@@ -1552,6 +1558,7 @@ class _ChatZoneState extends State<ChatZone> {
                         await upLoadingChat(settingsProvider: settingsProvider);
                       }
                       chatController.text = "";
+                      checkingpromptdone = true;
                       setState(() {});
                     }
                   },
@@ -2271,7 +2278,7 @@ class _ChatZoneState extends State<ChatZone> {
           what: mainprompt,
         );
         response +=
-            "\n *If you are replying to any chat click on its reply button to be specific*";
+            "\n **If you are replying to any chat click on its reply button to be specific**";
       } else {
         response = await Topics().usingGermini(
           what: mainprompt,
