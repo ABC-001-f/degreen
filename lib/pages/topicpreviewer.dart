@@ -230,6 +230,7 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
 
   void filterItems() {
     String query = _searchController.text.toLowerCase();
+    _loadContent();
     setState(() {
       _filteredItems = _filteredItems.where((item) {
         return item.title.toLowerCase().contains(query) ||

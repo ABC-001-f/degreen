@@ -1,3 +1,4 @@
+import 'package:degreen/pages/chatzone.dart';
 import 'package:degreen/pages/saved_items_page.dart';
 import 'package:degreen/pages/search.dart';
 import 'package:degreen/pages/settings.dart';
@@ -80,6 +81,12 @@ class _HomePageState extends State<HomePage> {
     }
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+            builder: (context) => const ChatZone(reply: '',),
+          )),
+          icon: const Icon(Icons.chat_rounded),
+        ),
         title: const Text('De Green'),
         centerTitle: true,
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -125,7 +132,7 @@ class _HomePageState extends State<HomePage> {
             actions: !_isColumnLayout
                 ? [
                     MouseRegion(
-      cursor: SystemMouseCursors.click,
+                      cursor: SystemMouseCursors.click,
                       child: GestureDetector(
                         onTap: () {
                           Navigator.of(context).push(MaterialPageRoute(
@@ -182,16 +189,16 @@ class _HomePageState extends State<HomePage> {
                   child: SingleChildScrollView(
                     child: Wrap(
                       alignment: WrapAlignment.center,
-                      children: List.generate(
-                        data.length,
-                        (index) => topics(
+                      children: List.generate(data.length, (index) {
+                        return topics(
                           icon: data[index][2],
                           topic: data[index][0],
                           subcontent: data[index][1],
                           descriptions: data[index][3],
                           type: 'h',
-                        ),
-                      ),
+                          index: index,
+                        );
+                      }),
                     ),
                   ),
                 )
@@ -204,6 +211,7 @@ class _HomePageState extends State<HomePage> {
                         subcontent: data[index][1],
                         descriptions: data[index][3],
                         type: 'm',
+                        index: index,
                       );
                     },
                     childCount: data.length,
@@ -287,79 +295,87 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  MouseRegion topics({
+  Widget topics({
     required IconData icon,
     required String topic,
     required String subcontent,
     required List<dynamic> descriptions,
     required String type,
+    required int index,
   }) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: () {
-          Navigator.of(context).push(MaterialPageRoute(
-            builder: (context) => Topicpreviewer(
-              topic: topic,
-              descriptions: descriptions,
-              icondata: icon,
-            ),
-          ));
-        },
-        child: Container(
-          padding: const EdgeInsets.all(8),
-          margin: const EdgeInsets.symmetric(
-            horizontal: 8,
-            vertical: 6,
-          ),
-          width: type == "h" ? 300 : double.infinity,
-          decoration: BoxDecoration(
-            color: Theme.of(context).splashColor,
-            border: Border.all(
-              width: 5,
-              color: Theme.of(context).hoverColor,
-            ),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).hoverColor,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  icon,
-                  color: Colors.white,
-                ),
+    if (index == data.length - 1) {
+      return const SizedBox(
+        height: 8,
+        width: double.infinity,
+      );
+    } else {
+      return MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: () {
+            Navigator.of(context).push(MaterialPageRoute(
+              builder: (context) => Topicpreviewer(
+                topic: topic,
+                descriptions: descriptions,
+                icondata: icon,
               ),
-              const SizedBox(
-                width: 12,
+            ));
+          },
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            margin: const EdgeInsets.symmetric(
+              horizontal: 8,
+              vertical: 6,
+            ),
+            width: type == "h" ? 300 : double.infinity,
+            decoration: BoxDecoration(
+              color: Theme.of(context).splashColor,
+              border: Border.all(
+                width: 5,
+                color: Theme.of(context).hoverColor,
               ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      topic,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      subcontent,
-                      style: const TextStyle(
-                        fontSize: 9,
-                      ),
-                    ),
-                  ],
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).hoverColor,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: Colors.white,
+                  ),
                 ),
-              )
-            ],
+                const SizedBox(
+                  width: 12,
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        topic,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        subcontent,
+                        style: const TextStyle(
+                          fontSize: 9,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              ],
+            ),
           ),
         ),
-      ),
-    );
+      );
+    }
   }
 }
