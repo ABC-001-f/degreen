@@ -70,6 +70,7 @@ class _ChatZoneState extends State<ChatZone> {
       nameaddress = "Sir",
       speakstring = "",
       _status = "checking ...",
+      explainext = "",
       chatpass = "";
   var newchatin = 0;
   final String _url = 'https://jsonplaceholder.typicode.com/posts/1';
@@ -111,7 +112,7 @@ class _ChatZoneState extends State<ChatZone> {
     _loadChats(del: false);
     _loadContent();
     _loadUserData();
-
+    explainext = widget.reply;
     _searchFocusNode.addListener(_handleSearchFocus);
     searchinController.addListener(filterItems);
   }
@@ -255,6 +256,7 @@ class _ChatZoneState extends State<ChatZone> {
     required String replyid,
     required String resreplyid,
     required String respond,
+    required String other,
   }) async {
     final newChatId = chats.isNotEmpty ? chats.last['chatid'] + 1 : 1;
     newchatin = newChatId;
@@ -266,7 +268,8 @@ class _ChatZoneState extends State<ChatZone> {
       'chatcontent': msg,
       'dateofchat': DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
       'respondreplyid': resreplyid,
-      'respond': respond
+      'respond': respond,
+      'other': other
     };
     chats.add(newChat);
     _saveChats();
@@ -725,6 +728,9 @@ class _ChatZoneState extends State<ChatZone> {
                                                               "none"
                                                           ? true
                                                           : false,
+                                                      otherstuff:
+                                                          chatsandpackages[
+                                                              index]['other'],
                                                     ),
                                                     chatsandpackages[index]
                                                                 ['respond'] ==
@@ -817,14 +823,14 @@ class _ChatZoneState extends State<ChatZone> {
                           SizedBox(
                             child: Column(
                               children: [
-                                replyactivated
+                                replyactivated || explainext != ""
                                     ? Column(
                                         children: [
                                           Row(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.spaceBetween,
                                             children: [
-                                              replyid > 0
+                                              replyid > 0 && explainext == ""
                                                   ? const Row(
                                                       children: [
                                                         Padding(
@@ -853,6 +859,7 @@ class _ChatZoneState extends State<ChatZone> {
                                                 onPressed: () {
                                                   replyactivated = false;
                                                   replyingcontent = "";
+                                                  explainext = "";
                                                   setState(() {});
                                                 },
                                                 icon: const Icon(
@@ -875,10 +882,12 @@ class _ChatZoneState extends State<ChatZone> {
                                                 borderRadius:
                                                     BorderRadius.circular(30),
                                               ),
-                                              child: SingleChildScrollView(
-                                                child: parseMarkdown(
-                                                    replyingcontent),
-                                              ),
+                                              child: explainext == ""
+                                                  ? SingleChildScrollView(
+                                                      child: parseMarkdown(
+                                                          replyingcontent),
+                                                    )
+                                                  : Text(explainext),
                                             ),
                                           ),
                                         ],
@@ -1536,6 +1545,7 @@ class _ChatZoneState extends State<ChatZone> {
                               replyid: replyid == 0 ? 0 : replyid,
                               resreplyid:
                                   respondreplyid == 0 ? 0 : respondreplyid,
+                              other: '',
                             );
                           } else {
                             if (checkingstuff.toLowerCase().contains("yes")) {
@@ -1596,7 +1606,7 @@ class _ChatZoneState extends State<ChatZone> {
                                       checkingstuff =
                                           await Topics().usingGermini(
                                         what:
-                                            "someone is expressing curiosity by telling you '$mainprompt' regarding to ' $whatto ' reply in a matured way, addressing me as $nameaddress",
+                                            "I am expressing curiosity by telling you '$mainprompt' regarding to ' $whatto ' reply in a matured way, addressing me as $nameaddress",
                                       );
                                     } else {
                                       checkingstuff = await trainer(
@@ -1626,7 +1636,7 @@ class _ChatZoneState extends State<ChatZone> {
                                           checkingstuff =
                                               await Topics().usingGermini(
                                             what:
-                                                "someone needs your help by asking you '$mainprompt' regarding to ' $whatto ' reply in a matured way, addressing me as $nameaddress",
+                                                "I need your help by asking you '$mainprompt' regarding to ' $whatto ' reply in a matured way, addressing me as $nameaddress",
                                           );
                                         } else {
                                           checkingstuff =
@@ -1646,37 +1656,40 @@ class _ChatZoneState extends State<ChatZone> {
                                   to: settingsProvider.settings.language);
                               checkingstuff = translated.text;
                               uploadwithresponse(
-                                msg: chatController.text,
-                                replyid: replyid == 0 ? 0 : replyid,
-                                resreplyid:
-                                    respondreplyid == 0 ? 0 : respondreplyid,
-                                response: checkingstuff,
-                              );
+                                  msg: chatController.text,
+                                  replyid: replyid == 0 ? 0 : replyid,
+                                  resreplyid:
+                                      respondreplyid == 0 ? 0 : respondreplyid,
+                                  response: checkingstuff,
+                                  other: '');
                             } else {
                               uploadnoresponse(
                                 msg: chatController.text,
                                 replyid: replyid,
                                 resreplyid: respondreplyid,
+                                other: '',
                               );
                             }
                           }
-                          replyid = 0;
-                          response = "";
-                          respondreplyid = 0;
-                          replyactivated = false;
                         } on Exception {
                           uploadnoresponse(
                             msg: chatController.text,
                             replyid: replyid,
                             resreplyid: respondreplyid,
+                            other: '',
                           );
                         }
                       } else {
                         await upLoadingChat(settingsProvider: settingsProvider);
                       }
+                      replyid = 0;
+                      response = "";
+                      respondreplyid = 0;
+                      replyactivated = false;
                       chatController.text = "";
                       checkingpromptdone = true;
                       endreachedinscrol = true;
+                      explainext = "";
                       setState(() {});
                     }
                   },
@@ -1767,7 +1780,8 @@ class _ChatZoneState extends State<ChatZone> {
                                               Padding(
                                                 padding: const EdgeInsets.only(
                                                     left: 9),
-                                                child: Text(replycontent),
+                                                child:
+                                                    parseMarkdown(replycontent),
                                               ),
                                             ],
                                           ),
@@ -1814,6 +1828,7 @@ class _ChatZoneState extends State<ChatZone> {
                       replyactivated = true;
                       replyingcontent = msgcontent;
                       replyid = 0;
+                      explainext = "";
                       setState(() {});
                     },
                     icon: const Icon(
@@ -1887,6 +1902,7 @@ class _ChatZoneState extends State<ChatZone> {
     required String replycontent,
     required String msgcontent,
     required String datetime,
+    required String otherstuff,
     required int chatid,
     required bool noresponse,
     required void Function()? onTap,
@@ -1926,7 +1942,7 @@ class _ChatZoneState extends State<ChatZone> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            replyin
+                            replyin || otherstuff != ""
                                 ? Container(
                                     padding: const EdgeInsets.all(9),
                                     width: double.infinity,
@@ -1943,7 +1959,7 @@ class _ChatZoneState extends State<ChatZone> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        toai
+                                        toai || otherstuff != ""
                                             ? Row(
                                                 children: [
                                                   Image.asset(
@@ -1968,7 +1984,9 @@ class _ChatZoneState extends State<ChatZone> {
                                         Padding(
                                           padding:
                                               const EdgeInsets.only(left: 9),
-                                          child: Text(replycontent),
+                                          child: otherstuff != ""
+                                              ? Text(otherstuff)
+                                              : parseMarkdown(replycontent),
                                         ),
                                       ],
                                     ),
@@ -2008,6 +2026,7 @@ class _ChatZoneState extends State<ChatZone> {
                           replyactivated = true;
                           replyingcontent = msgcontent;
                           replyid = chatid;
+                          explainext = "";
                           setState(() {});
                         },
                         icon: const Icon(
@@ -2290,6 +2309,7 @@ class _ChatZoneState extends State<ChatZone> {
 
   void uploadnoresponse({
     required String msg,
+    required String other,
     required int replyid,
     required int resreplyid,
   }) async {
@@ -2298,6 +2318,7 @@ class _ChatZoneState extends State<ChatZone> {
       replyid: replyid == 0 ? "none" : replyid.toString(),
       resreplyid: resreplyid == 0 ? "none" : resreplyid.toString(),
       respond: '',
+      other: other,
     );
     errormsg(
         context: context,
@@ -2322,11 +2343,23 @@ class _ChatZoneState extends State<ChatZone> {
             "is '$mainprompt' referencing a previous conversation or attempting to correct / improve a previous response?",
         how: "i need only a yes or no answer",
       );
+
       if (response.toLowerCase().contains("yes")) {
-        response = await Topics().usingGermini(
-            what: "answer this : '$mainprompt' addressing me as $nameaddress");
-        response +=
-            "\n **If you are replying to any chat click on its reply button to be specific**";
+        if (explainext == "") {
+          response = await Topics().usingGermini(
+              what:
+                  "answer this : '$mainprompt' addressing me as $nameaddress");
+          response +=
+              "\n **If you are replying to any chat click on its reply button to be specific**";
+        } else {
+          var translatedexpl =
+              await explainext.translate(from: 'auto', to: 'en');
+          explainext = translatedexpl.text;
+          response = await Topics().usingGermini(
+            what:
+                "I needs your help by asking you '$mainprompt' regarding to ' $explainext ' reply in a matured way, addressing me as $nameaddress",
+          );
+        }
       } else {
         response = await Topics().usingGermini(
             what: "answer this : '$mainprompt' addressing me as $nameaddress");
@@ -2336,17 +2369,24 @@ class _ChatZoneState extends State<ChatZone> {
         var translated =
             await response.translate(to: settingsProvider.settings.language);
         response = translated.text;
+        if (explainext != "") {
+          var explainextt = await explainext.translate(
+              to: settingsProvider.settings.language);
+          explainext = explainextt.text;
+        }
         uploadwithresponse(
           msg: chatController.text,
           replyid: replyid,
           response: response,
           resreplyid: respondreplyid,
+          other: explainext,
         );
       } else {
         uploadnoresponse(
           msg: chatController.text,
           replyid: replyid,
           resreplyid: respondreplyid,
+          other: explainext,
         );
       }
     } on Exception {
@@ -2354,6 +2394,7 @@ class _ChatZoneState extends State<ChatZone> {
         msg: chatController.text,
         replyid: replyid,
         resreplyid: respondreplyid,
+        other: explainext,
       );
     }
     response = "";
@@ -2401,12 +2442,14 @@ class _ChatZoneState extends State<ChatZone> {
     required int replyid,
     required int resreplyid,
     required String response,
+    required String other,
   }) async {
     await addChat(
       msg: msg,
       replyid: replyid == 0 ? "none" : replyid.toString(),
       resreplyid: resreplyid == 0 ? "none" : resreplyid.toString(),
       respond: response,
+      other: other,
     );
   }
 
@@ -2465,7 +2508,9 @@ class _ChatZoneState extends State<ChatZone> {
                     fit: BoxFit.cover,
                   ),
           ),
-          const SizedBox(width: 12,),
+          const SizedBox(
+            width: 12,
+          ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -2488,116 +2533,116 @@ class _ChatZoneState extends State<ChatZone> {
             showDialog(
               context: context,
               builder: (context) => StatefulBuilder(
-                builder: (BuildContext context, StateSetter setState) {
-                  return SimpleDialog(
-                    title: const Text("Settings"),
-                    contentPadding: const EdgeInsets.all(12),
-                    children: [
-                      Center(
-                        child: Stack(
-                          children: [
-                            Container(
-                              width: 110,
-                              height: 110,
-                              decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(300),
-                                  color: Theme.of(context).hoverColor),
-                              child: ClipRRect(
+                  builder: (BuildContext context, StateSetter setState) {
+                return SimpleDialog(
+                  title: const Text("Settings"),
+                  contentPadding: const EdgeInsets.all(12),
+                  children: [
+                    Center(
+                      child: Stack(
+                        children: [
+                          Container(
+                            width: 110,
+                            height: 110,
+                            decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(300),
-                                child: Center(
-                                  child: imageFile != null
-                                      ? Image.file(
-                                          _imageFile!,
-                                          height: 200,
-                                          width: 200,
-                                          fit: BoxFit.cover,
-                                        )
-                                      : _userData != null &&
-                                              _userData!.imagePath.isNotEmpty
-                                          ? Image.file(
-                                              File(_userData!.imagePath),
-                                              height: 200,
-                                              width: 200,
-                                              fit: BoxFit.cover,
-                                            )
-                                          : Image.asset(
-                                              "lib/assets/new degreen ic.png",
-                                              width: 100,
-                                              height: 100,
-                                              fit: BoxFit.cover,
-                                            ),
-                                ),
+                                color: Theme.of(context).hoverColor),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(300),
+                              child: Center(
+                                child: imageFile != null
+                                    ? Image.file(
+                                        _imageFile!,
+                                        height: 200,
+                                        width: 200,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : _userData != null &&
+                                            _userData!.imagePath.isNotEmpty
+                                        ? Image.file(
+                                            File(_userData!.imagePath),
+                                            height: 200,
+                                            width: 200,
+                                            fit: BoxFit.cover,
+                                          )
+                                        : Image.asset(
+                                            "lib/assets/new degreen ic.png",
+                                            width: 100,
+                                            height: 100,
+                                            fit: BoxFit.cover,
+                                          ),
                               ),
                             ),
-                            IconButton.filled(
-                              onPressed: () async {
-                                imageFile = await _picker.pickImage(
-                                  source: ImageSource.gallery,
-                                );
-                                if (imageFile != null) {
-                                  setState(() {
-                                    _imageFile = File(imageFile!.path);
-                                  });
-                                }
-                                setState(() {});
-                              },
-                              icon: const Icon(Icons.edit),
-                            )
-                          ],
-                        ),
+                          ),
+                          IconButton.filled(
+                            onPressed: () async {
+                              imageFile = await _picker.pickImage(
+                                source: ImageSource.gallery,
+                              );
+                              if (imageFile != null) {
+                                setState(() {
+                                  _imageFile = File(imageFile!.path);
+                                });
+                              }
+                              setState(() {});
+                            },
+                            icon: const Icon(Icons.edit),
+                          )
+                        ],
                       ),
-                      const Divider(
-                        height: 40,
-                        endIndent: 10,
-                        indent: 10,
-                        thickness: 2,
-                      ),
-                      TextField(
-                        controller: usernameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Can I Call You',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.all(
-                              Radius.circular(10),
-                            ),
+                    ),
+                    const Divider(
+                      height: 40,
+                      endIndent: 10,
+                      indent: 10,
+                      thickness: 2,
+                    ),
+                    TextField(
+                      controller: usernameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Can I Call You',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(10),
                           ),
                         ),
                       ),
-                      const SizedBox(
-                        height: 20,
-                      ),
-                      CupertinoButton.filled(
-                        child: const Text("submit"),
-                        onPressed: () async {
-                          if (usernameController.text.isNotEmpty) {
-                            final directory =
-                                await getApplicationDocumentsDirectory();
-                            String imagePath = _userData?.imagePath ?? '';
-                            if (imageFile != null) {
-                              imagePath = '${directory.path}/${imageFile!.name}';
-                              await imageFile!.saveTo(imagePath);
-                            }
-                  
-                            final userData = UserData(
-                              name: usernameController.text,
-                              imagePath: imagePath,
-                            );
-                  
-                            final file = File('${directory.path}/user_data.json');
-                            await file.writeAsString(jsonEncode(userData.toJson()));
-                  
-                            setState(() {
-                              _userData = userData;
-                            });
-                  
-                            Navigator.of(context).pop();
+                    ),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    CupertinoButton.filled(
+                      child: const Text("submit"),
+                      onPressed: () async {
+                        if (usernameController.text.isNotEmpty) {
+                          final directory =
+                              await getApplicationDocumentsDirectory();
+                          String imagePath = _userData?.imagePath ?? '';
+                          if (imageFile != null) {
+                            imagePath = '${directory.path}/${imageFile!.name}';
+                            await imageFile!.saveTo(imagePath);
                           }
-                        },
-                      ),
-                    ],
-                  );
-                }
-              ),
+
+                          final userData = UserData(
+                            name: usernameController.text,
+                            imagePath: imagePath,
+                          );
+
+                          final file = File('${directory.path}/user_data.json');
+                          await file
+                              .writeAsString(jsonEncode(userData.toJson()));
+
+                          setState(() {
+                            _userData = userData;
+                          });
+
+                          Navigator.of(context).pop();
+                        }
+                      },
+                    ),
+                  ],
+                );
+              }),
             );
           },
           icon: const Icon(Icons.settings_rounded),
