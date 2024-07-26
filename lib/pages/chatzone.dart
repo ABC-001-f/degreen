@@ -8,7 +8,9 @@ import 'package:degreen/utils/settings_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 import 'package:path/path.dart' as path;
@@ -17,6 +19,28 @@ import 'package:provider/provider.dart';
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:translator/translator.dart';
+
+class UserData {
+  final String name;
+  final String imagePath;
+
+  UserData({
+    required this.name,
+    required this.imagePath,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'imagePath': imagePath,
+      };
+
+  factory UserData.fromJson(Map<String, dynamic> json) {
+    return UserData(
+      name: json['name'],
+      imagePath: json['imagePath'],
+    );
+  }
+}
 
 class ChatZone extends StatefulWidget {
   final String reply;
@@ -33,24 +57,34 @@ class _ChatZoneState extends State<ChatZone> {
   TextEditingController chatController = TextEditingController();
   TextEditingController searchController = TextEditingController();
   TextEditingController nameController = TextEditingController();
+  TextEditingController packageTitleController = TextEditingController();
   TextEditingController usernameController = TextEditingController();
+  TextEditingController packagePassconController = TextEditingController();
   TextEditingController searchinController = TextEditingController();
   ScrollController scrollController = ScrollController();
   final FocusNode _searchFocusNode = FocusNode();
   List<Map> filteredItems = [];
+  List<Map<String, dynamic>> chatinpack = [];
   FlutterTts flutterTts = FlutterTts();
-  String whichactive = "msg", speakstring = "", _status = "checking ...";
+  String whichactive = "msg",
+      nameaddress = "Sir",
+      speakstring = "",
+      _status = "checking ...",
+      chatpass = "";
+  var newchatin = 0;
   final String _url = 'https://jsonplaceholder.typicode.com/posts/1';
-  //msg or selectmode or search or package
   double fontSize = 14.0;
-  int replyid = 0, respondreplyid = 0;
-  String response = "";
+  int replyid = 0, respondreplyid = 0, indexofpack = 0;
+  String response = "", replyingcontent = "";
+  Map packageviewdetail = {};
   Widget children = const SizedBox();
   List<dynamic> chatsandpackages = [];
   List selectedchatbox = [];
   List<Map<String, dynamic>> chats = [];
-  List<dynamic> packages = [];
+  List<Map<String, dynamic>> chatsclone = [];
+  List<Map<String, dynamic>> packages = [];
   List<Map<String, dynamic>> filteredChats = [];
+  List<Map<String, dynamic>> filteredPack = [];
 
   late Timer _timer;
   static const _duration = Duration(milliseconds: 500);
@@ -60,17 +94,21 @@ class _ChatZoneState extends State<ChatZone> {
       replyactivated = false,
       activesearch = false,
       activesend = false,
+      tophide = false,
+      packageview = false,
       checkingpromptdone = true,
-      endreachedinscrol = true,
+      endreachedinscrol = false,
       loadingspeachall = false,
       isSpeaking = false;
-  String replyingcontent = "";
+  UserData? _userData;
+  final ImagePicker _picker = ImagePicker();
   @override
   void initState() {
     super.initState();
     _startPeriodicRequest();
-    _loadContent();
     _loadChats(del: false);
+    _loadContent();
+    _loadUserData();
     _searchFocusNode.addListener(_handleSearchFocus);
     searchinController.addListener(filterItems);
   }
@@ -82,6 +120,18 @@ class _ChatZoneState extends State<ChatZone> {
     _timer.cancel();
     _searchFocusNode.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadUserData() async {
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/user_data.json');
+    if (await file.exists()) {
+      final jsonData = await file.readAsString();
+      final Map<String, dynamic> data = jsonDecode(jsonData);
+      setState(() {
+        _userData = UserData.fromJson(data);
+      });
+    }
   }
 
   void _startPeriodicRequest() {
@@ -115,15 +165,7 @@ class _ChatZoneState extends State<ChatZone> {
 
   void _loadContent() {
     setState(() {
-      filteredItems = [
-        {
-          "id": 1,
-          "title": "Agro based indurstries",
-          "chatids": [2, 1],
-          "createddate": "12-2-2024 : 4:00pm",
-          "modefieddate": "12-2-2025 : 4:00pm",
-        }
-      ];
+      filteredItems = packages;
       _sortContent();
     });
   }
@@ -156,31 +198,45 @@ class _ChatZoneState extends State<ChatZone> {
     final file = File(filePath);
 
     if (await file.exists()) {
-      final content = await file.readAsString();
-      final jsonContent = jsonDecode(content);
-      setState(() {
-        chats = List<Map<String, dynamic>>.from(jsonContent['chats']);
-        packages = jsonContent['packages'];
-      });
+      try {
+        final content = await file.readAsString();
+        final jsonContent = jsonDecode(content);
+        setState(() {
+          chats = List<Map<String, dynamic>>.from(jsonContent['chats']);
+          packages = List<Map<String, dynamic>>.from(jsonContent['packages']);
+        });
+      } catch (e) {
+        _loadChats(del: false);
+      }
     } else {
       await file.create();
       final initialContent = jsonEncode({'chats': [], 'packages': []});
       await file.writeAsString(initialContent);
     }
-    setState(() {
-      filteredChats = chats;
-    });
+    filteredChats = chats;
+    chatsclone = chats;
+    filteredItems = packages;
     displayingchats();
     if (!del) {
       WidgetsBinding.instance.addPostFrameCallback((_) => scrollToBottom());
     }
+    if (whichactive == "package") {
+      if (newchatin != 0) {
+        selectedchatbox.add(newchatin);
+        chatinpack = packages
+            .where(
+              (package) => package['id'] == packageviewdetail['packid'],
+            )
+            .toList();
+        _updatePackage(chatinpack[0]);
+      }
+      viewpackage(chatinpack[0]);
+    }
   }
 
   void displayingchats() {
-    chatsandpackages = [];
-    for (var element in filteredChats) {
-      chatsandpackages.add(element);
-    }
+    chatsandpackages = filteredChats.toList(growable: false);
+    setState(() {});
   }
 
   Future<void> _saveChats() async {
@@ -197,6 +253,8 @@ class _ChatZoneState extends State<ChatZone> {
     required String respond,
   }) async {
     final newChatId = chats.isNotEmpty ? chats.last['chatid'] + 1 : 1;
+    newchatin = newChatId;
+    chatinpack = [];
     final newChat = {
       'type': 'chat',
       'chatid': newChatId,
@@ -206,18 +264,69 @@ class _ChatZoneState extends State<ChatZone> {
       'respondreplyid': resreplyid,
       'respond': respond
     };
+    chats.add(newChat);
+    _saveChats();
+    _loadChats(del: false);
+    setState(() {});
+  }
 
+  void _updatePackage(Map<String, dynamic> package) {
+    Set<int> combinedSet = {...package['chatids'], ...selectedchatbox};
+
+    List<int> combinedList = combinedSet.toList();
+    package['chatids'] = combinedList;
+    package['modefieddate'] =
+        DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
+    selectedchatbox = [];
+    newchatin = 0;
+    setState(() {});
+    _saveChats();
+    _loadChats(del: false);
+  }
+
+  void _createNewPackage(String title) {
+    final newpackId = packages.isNotEmpty ? packages.last['id'] + 1 : 1;
+    final newpackage = {
+      "id": newpackId,
+      "title": title,
+      "chatids": selectedchatbox,
+      "createddate": DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
+      "modefieddate": DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
+    };
+    selectedchatbox = [];
+    whichactive = "msg";
     setState(() {
-      chats.add(newChat);
+      packages.add(newpackage);
     });
     _saveChats();
     _loadChats(del: false);
   }
 
-  Future<void> _deleteChat(int chatId) async {
+  Future<void> _extractPackage(int packId) async {
     setState(() {
-      chats.removeWhere((chat) => chat['chatid'] == chatId);
+      packages.removeWhere((pack) => pack['id'] == packId);
     });
+    whichactive = "msg";
+    packageview = false;
+    packageviewdetail = {};
+    await _saveChats();
+    await _loadChats(del: true);
+  }
+
+  Future<void> _deletePackage(int packId, List chatids) async {
+    for (var chatId in chatids) {
+      _deleteChat(chatId);
+    }
+    _extractPackage(packId);
+  }
+
+  Future<void> _deleteChat(int chatId) async {
+    if (whichactive == "package") {
+      packageviewdetail['chatids'].removeWhere((chatid) => chatid == chatId);
+      filteredItems[indexofpack]['chatids'] = packageviewdetail['chatids'];
+    }
+    chats.removeWhere((chat) => chat['chatid'] == chatId);
+
     await _saveChats();
     await _loadChats(del: true);
   }
@@ -225,6 +334,7 @@ class _ChatZoneState extends State<ChatZone> {
   Future<void> clearAllChats() async {
     chatsandpackages = [];
     filteredChats = [];
+    chatsclone = [];
     final filePath = await _getChatsFilePath();
     final file = File(filePath);
 
@@ -245,6 +355,7 @@ class _ChatZoneState extends State<ChatZone> {
         curve: Curves.easeOut,
       );
     }
+    setState(() {});
   }
 
   void _handleSearchFocus() {
@@ -257,9 +368,10 @@ class _ChatZoneState extends State<ChatZone> {
 
   void _handleSearch() {
     if (searchController.text.isEmpty) {
-      filteredChats = chats;
+      packageview ? whichactive = "package" : whichactive = "msg";
+      filteredChats = chatsclone;
     } else {
-      filteredChats = chats.where((chat) {
+      filteredChats = chatsclone.where((chat) {
         return chat['chatcontent']
             .toString()
             .toLowerCase()
@@ -270,10 +382,11 @@ class _ChatZoneState extends State<ChatZone> {
     setState(() {});
   }
 
-  Future<void> speak(
-      {required String textToConvert,
-      required BuildContext context,
-      required double rate}) async {
+  Future<void> speak({
+    required String textToConvert,
+    required BuildContext context,
+    required double rate,
+  }) async {
     try {
       await flutterTts.setLanguage("en-US");
       await flutterTts.setPitch(1);
@@ -323,6 +436,7 @@ class _ChatZoneState extends State<ChatZone> {
     searchController.addListener(
       () {
         if (searchController.text != "" && searchController.text != " ") {
+          whichactive = "search";
           activesearch = true;
           _handleSearch();
         } else {
@@ -333,6 +447,17 @@ class _ChatZoneState extends State<ChatZone> {
     );
     scrollController.addListener(
       () {
+        if (scrollController.position.userScrollDirection ==
+            ScrollDirection.forward) {
+          setState(() {
+            tophide = true;
+          });
+        } else if (scrollController.position.userScrollDirection ==
+            ScrollDirection.reverse) {
+          setState(() {
+            tophide = false;
+          });
+        }
         if (scrollController.offset ==
             scrollController.position.minScrollExtent) {
           endreachedinscrol = true;
@@ -344,149 +469,14 @@ class _ChatZoneState extends State<ChatZone> {
     );
 
     return Scaffold(
-      appBar: AppBar(
-        leading: MouseRegion(
-          cursor: SystemMouseCursors.click,
-          child: GestureDetector(
-            onTap: () => Navigator.of(context).pop(),
-            child: const Icon(Icons.chevron_left),
-          ),
-        ),
-        title: Row(
-          children: [
-            Image.asset(
-              "lib/assets/new degreen ic.png",
-              width: 60,
-              height: 60,
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text("Degreen"),
-                Text(
-                  _status,
-                  style: const TextStyle(fontSize: 12),
-                ),
-              ],
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) => SimpleDialog(
-                  title: const Text("Settings"),
-                  contentPadding: const EdgeInsets.all(12),
-                  children: [
-                    Center(
-                      child: Stack(
-                        children: [
-                          Container(
-                            width: 110,
-                            height: 110,
-                            decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(300),
-                                color: Theme.of(context).hoverColor),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(300),
-                              child: Center(
-                                child: Image.asset(
-                                  "lib/assets/new degreen ic.png",
-                                  width: 100,
-                                  height: 100,
-                                  fit: BoxFit.contain,
-                                ),
-                              ),
-                            ),
-                          ),
-                          IconButton.filled(
-                            onPressed: () {},
-                            icon: const Icon(Icons.edit),
-                          )
-                        ],
-                      ),
-                    ),
-                    const SizedBox(
-                      height: 20,
-                    ),
-                    TextField(
-                      controller: nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Give Me A Name',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(
-                            Radius.circular(10),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(
-                      height: 20,
-                    ),
-                    TextField(
-                      controller: usernameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Can I Call You',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(
-                            Radius.circular(10),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(
-                      height: 20,
-                    ),
-                    CupertinoButton.filled(
-                        child: const Text("submit"), onPressed: () {}),
-                  ],
-                ),
-              );
-            },
-            icon: const Icon(Icons.settings_rounded),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right: 18),
-            child: IconButton(
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (context) {
-                    return AlertDialog(
-                      title: Text(chatsandpackages.length > 1
-                          ? 'Delete Chats ?'
-                          : 'Delete Chat ?'),
-                      content: Text(chatsandpackages.length > 1
-                          ? "This will delete the sent and responds of all these chats"
-                          : "This will delete the sent and responds of this chat"),
-                      actions: [
-                        TextButton(
-                          child: const Text('Cancel'),
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                        ),
-                        TextButton(
-                          child: const Text('Proceed'),
-                          onPressed: () async {
-                            Navigator.pop(context);
-                            await clearAllChats();
-                            chatsandpackages = [];
-                          },
-                        ),
-                      ],
-                    );
-                  },
-                );
-                setState(() {});
-              },
-              icon: const Icon(Icons.delete),
-            ),
-          )
-        ],
-      ),
+      appBar: deviceType == 'mobile'
+          ? !tophide
+              ? appbar()
+              : const PreferredSize(
+                  preferredSize: Size(double.infinity, 1),
+                  child: SizedBox(),
+                )
+          : appbar(),
       endDrawer: Drawer(
         child: drawercustom(deviceType: deviceType),
       ),
@@ -512,13 +502,38 @@ class _ChatZoneState extends State<ChatZone> {
                           SizedBox(
                             child: Row(
                               children: [
+                                packageview
+                                    ? Row(
+                                        children: [
+                                          actionbuttons(
+                                            context: context,
+                                            child: const Icon(
+                                                Icons.chevron_left_rounded),
+                                            onTap: () {
+                                              packageview = false;
+                                              whichactive = "msg";
+                                              packageviewdetail = {};
+                                              chatsclone = chats;
+                                              filteredChats = chatsclone;
+                                              displayingchats();
+                                              setState(() {});
+                                            },
+                                          ),
+                                          const SizedBox(
+                                            width: 7,
+                                          ),
+                                        ],
+                                      )
+                                    : const SizedBox(),
                                 Expanded(
                                   child: TextField(
                                     controller: searchController,
                                     focusNode: _searchFocusNode,
-                                    decoration: const InputDecoration(
+                                    decoration: InputDecoration(
                                       border: InputBorder.none,
-                                      hintText: "Search Chat",
+                                      hintText: packageview
+                                          ? "Search Chat In ${packageviewdetail['title']}"
+                                          : "Search Chat",
                                     ),
                                   ),
                                 ),
@@ -530,6 +545,7 @@ class _ChatZoneState extends State<ChatZone> {
                                   onTap: () {
                                     if (activesearch) {
                                       searchController.text = "";
+                                      _handleSearch();
                                     }
                                     setState(() {});
                                   },
@@ -563,7 +579,7 @@ class _ChatZoneState extends State<ChatZone> {
                                     ),
                                   )
                                 : Stack(
-                                    alignment: Alignment.bottomRight,
+                                    alignment: Alignment.bottomCenter,
                                     children: [
                                       SingleChildScrollView(
                                         controller: scrollController,
@@ -590,9 +606,6 @@ class _ChatZoneState extends State<ChatZone> {
                                                 }
                                               }
 
-                                              // print(
-                                              //     "sender reply ----------- ${chatsandpackages[index]['replyto']} -- $replycontent");
-
                                               String resreplycontent = "";
                                               if (chatsandpackages[index]
                                                       ['respondreplyid'] !=
@@ -609,19 +622,19 @@ class _ChatZoneState extends State<ChatZone> {
                                                   }
                                                 }
                                               }
-                                              // print(
-                                              //     "reciever reply ----------- ${chatsandpackages[index]['respondreplyid']} -- $resreplycontent");
-                                              // print(
-                                              //     "================================");
-                                              //'chatid': newChatId,
-                                              // 'replyto': replyid,
-                                              // 'chatcontent': msg,
-                                              // 'dateofchat': DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
-                                              // 'respondreplyid': resreplyid,
-                                              // 'respond': respond
-                                              if (chatsandpackages[index]
-                                                      ['type'] ==
-                                                  "chat") {
+                                              String chatinpack = "false:0";
+                                              if (!packageview) {
+                                                for (var pack in packages) {
+                                                  if (pack['chatids'].contains(
+                                                      chatsandpackages[index]
+                                                          ['chatid'])) {
+                                                    chatinpack = "true:1";
+                                                    break;
+                                                  }
+                                                  chatinpack = "false:0";
+                                                }
+                                              }
+                                              if (chatinpack == "false:0") {
                                                 return Column(
                                                   children: [
                                                     sender(
@@ -659,7 +672,11 @@ class _ChatZoneState extends State<ChatZone> {
                                                         if (selectedchatbox
                                                             .isEmpty) {
                                                           selectedchatbox = [];
-                                                          whichactive = "msg";
+                                                          packageview
+                                                              ? whichactive =
+                                                                  "package"
+                                                              : whichactive =
+                                                                  "msg";
                                                         } else {
                                                           whichactive =
                                                               "select";
@@ -748,8 +765,11 @@ class _ChatZoneState extends State<ChatZone> {
                                                                   .isEmpty) {
                                                                 selectedchatbox =
                                                                     [];
-                                                                whichactive =
-                                                                    "msg";
+                                                                packageview
+                                                                    ? whichactive =
+                                                                        "package"
+                                                                    : whichactive =
+                                                                        "msg";
                                                               } else {
                                                                 whichactive =
                                                                     "select";
@@ -774,8 +794,7 @@ class _ChatZoneState extends State<ChatZone> {
                                                 );
                                               } else {
                                                 //package
-
-                                                return packagerdesign();
+                                                return const SizedBox();
                                               }
                                             },
                                           ),
@@ -863,7 +882,7 @@ class _ChatZoneState extends State<ChatZone> {
                                     : const SizedBox(),
                                 Container(
                                   padding: const EdgeInsets.all(8.0),
-                                  width: whichactive != "msg"
+                                  width: whichactive == "select"
                                       ? 300
                                       : double.infinity,
                                   decoration: BoxDecoration(
@@ -880,7 +899,8 @@ class _ChatZoneState extends State<ChatZone> {
                                               : "Talk to me ...",
                                           settingsProvider: settingsProvider,
                                         )
-                                      : whichactive == "select"
+                                      : whichactive == "select" ||
+                                              selectedchatbox.isNotEmpty
                                           ? selecting(context,
                                               settingsProvider:
                                                   settingsProvider)
@@ -995,6 +1015,13 @@ class _ChatZoneState extends State<ChatZone> {
                 itemCount: filteredItems.length,
                 itemBuilder: (context, index) {
                   final content = filteredItems[index];
+                  int idh = content['chatids'].isNotEmpty
+                      ? content['chatids'].last
+                      : 0;
+                  var whatgot =
+                      chats.where((chat) => chat['chatid'] == idh).toList();
+                  Map<String, dynamic> chatgot = {};
+                  if (whatgot.isNotEmpty) chatgot = whatgot[0];
                   return Container(
                     padding: const EdgeInsets.all(18),
                     margin: const EdgeInsets.all(6),
@@ -1044,7 +1071,9 @@ class _ChatZoneState extends State<ChatZone> {
                                                 TextButton(
                                                   child: const Text('Proceed'),
                                                   onPressed: () {
-                                                    //extract function
+                                                    _extractPackage(
+                                                        content['id']);
+                                                    Navigator.pop(context);
                                                   },
                                                 ),
                                               ],
@@ -1078,13 +1107,21 @@ class _ChatZoneState extends State<ChatZone> {
                                                 TextButton(
                                                   child: const Text('Extract'),
                                                   onPressed: () {
-                                                    //extract function
+                                                    _extractPackage(
+                                                        content['id']);
+                                                    Navigator.pop(context);
+                                                    setState(() {});
                                                   },
                                                 ),
                                                 TextButton(
                                                   child: const Text('Proceed'),
                                                   onPressed: () {
-                                                    //delete function
+                                                    _deletePackage(
+                                                      content['id'],
+                                                      content['chatids'],
+                                                    );
+                                                    Navigator.pop(context);
+                                                    setState(() {});
                                                   },
                                                 ),
                                               ],
@@ -1103,78 +1140,97 @@ class _ChatZoneState extends State<ChatZone> {
                             ),
                           ],
                         ),
-                        Container(
-                          height: 250,
-                          padding: const EdgeInsets.all(12),
-                          margin: const EdgeInsets.symmetric(vertical: 6),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(30),
-                            border: Border.all(
-                              color: Theme.of(context).hoverColor,
-                            ),
-                          ),
-                          child: Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: Theme.of(context).hoverColor,
-                                      borderRadius: const BorderRadius.only(
-                                        topLeft: Radius.circular(30),
-                                        bottomLeft: Radius.circular(30),
-                                        bottomRight: Radius.circular(30),
-                                      ),
-                                    ),
-                                    width: 160,
-                                    child:
-                                        const Text("hello world i am good..."),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(
-                                height: 6,
-                              ),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: const BoxDecoration(
-                                      color: Colors.green,
-                                      borderRadius: BorderRadius.only(
-                                        topRight: Radius.circular(30),
-                                        bottomLeft: Radius.circular(30),
-                                        bottomRight: Radius.circular(30),
-                                      ),
-                                    ),
-                                    width: 160,
-                                    child:
-                                        const Text("hello world i am good..."),
-                                  ),
-                                ],
-                              ),
-                              const Expanded(
-                                child: SizedBox(),
-                              ),
-                              Container(
+                        chatgot.isNotEmpty
+                            ? Container(
+                                height: 250,
                                 padding: const EdgeInsets.all(12),
+                                margin: const EdgeInsets.symmetric(vertical: 6),
                                 decoration: BoxDecoration(
-                                  color: Theme.of(context).splashColor,
                                   borderRadius: BorderRadius.circular(30),
+                                  border: Border.all(
+                                    color: Theme.of(context).hoverColor,
+                                  ),
                                 ),
-                                width: 160,
+                                child: Column(
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(12),
+                                          decoration: BoxDecoration(
+                                            color: Theme.of(context).hoverColor,
+                                            borderRadius:
+                                                const BorderRadius.only(
+                                              topLeft: Radius.circular(30),
+                                              bottomLeft: Radius.circular(30),
+                                              bottomRight: Radius.circular(30),
+                                            ),
+                                          ),
+                                          width: 160,
+                                          child: Text(chatgot['chatcontent']
+                                                      .length >
+                                                  26
+                                              ? "${chatgot['chatcontent'].substring(0, 26)}..."
+                                              : chatgot['chatcontent']),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(
+                                      height: 6,
+                                    ),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(12),
+                                          decoration: const BoxDecoration(
+                                            color: Colors.green,
+                                            borderRadius: BorderRadius.only(
+                                              topRight: Radius.circular(30),
+                                              bottomLeft: Radius.circular(30),
+                                              bottomRight: Radius.circular(30),
+                                            ),
+                                          ),
+                                          width: 160,
+                                          child: Text(chatgot['respond']
+                                                      .length >
+                                                  26
+                                              ? "${chatgot['respond'].substring(0, 26)}..."
+                                              : chatgot['respond']),
+                                        ),
+                                      ],
+                                    ),
+                                    const Expanded(
+                                      child: SizedBox(),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context).splashColor,
+                                        borderRadius: BorderRadius.circular(30),
+                                      ),
+                                      width: 160,
+                                      child: Center(
+                                        child: Text(content['chatids'].length -
+                                                    1 !=
+                                                0
+                                            ? content['chatids'].length - 1 > 1
+                                                ? "and ${content['chatids'].length - 1} others"
+                                                : "and ${content['chatids'].length - 1} other"
+                                            : "---"),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : const SizedBox(
+                                height: 100,
                                 child: Center(
-                                  child: Text(content['chatids'].length - 1 > 1
-                                      ? "and ${content['chatids'].length - 1} others"
-                                      : "and ${content['chatids'].length - 1} other"),
+                                  child: Text("No Chats Here"),
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
                         const SizedBox(
                           height: 6,
                         ),
@@ -1192,7 +1248,10 @@ class _ChatZoneState extends State<ChatZone> {
                                     "Date Modified :\n ${content['modefieddate']}"),
                                 ElevatedButton(
                                   child: const Text("view"),
-                                  onPressed: () {},
+                                  onPressed: () {
+                                    indexofpack = index;
+                                    viewpackage(content);
+                                  },
                                 ),
                               ],
                             ),
@@ -1207,8 +1266,33 @@ class _ChatZoneState extends State<ChatZone> {
     );
   }
 
-  Row selecting(BuildContext context,
-      {required SettingsProvider settingsProvider}) {
+  void viewpackage(Map<dynamic, dynamic> content) {
+    if (activesearch) {
+      searchController.text = "";
+      _handleSearch();
+    }
+    whichactive = "package";
+    packageview = true;
+    packageviewdetail = {
+      "packid": content['id'],
+      "title": content['title'],
+      "chatids": content['chatids']
+    };
+    filteredChats = [];
+    chatsclone = [];
+    for (var elein in content['chatids']) {
+      chatsclone.addAll(chats.where((chat) {
+        return chat['chatid'] == elein;
+      }).toList());
+    }
+    filteredChats = chatsclone;
+    displayingchats();
+  }
+
+  Row selecting(
+    BuildContext context, {
+    required SettingsProvider settingsProvider,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
@@ -1238,25 +1322,27 @@ class _ChatZoneState extends State<ChatZone> {
                       child: const Text('Proceed'),
                       onPressed: () async {
                         Navigator.pop(context);
-                        for (var word in selectedchatbox) {
+                        for (var i = 0; i < selectedchatbox.length; i++) {
+                          var word = selectedchatbox[i];
                           await _deleteChat(word);
-                          selectedchatbox = [];
                         }
+                        selectedchatbox = [];
                       },
                     ),
                   ],
                 );
               },
             );
-
-            whichactive = "msg";
+            packageview ? whichactive = "package" : whichactive = "msg";
             setState(() {});
           },
         ),
         actionbuttons(
           context: context,
           child: const Icon(CupertinoIcons.envelope_open_fill),
-          onTap: () {},
+          onTap: () {
+            showpackagedialog();
+          },
         ),
         actionbuttons(
           context: context,
@@ -1277,7 +1363,7 @@ class _ChatZoneState extends State<ChatZone> {
               loadingspeachall = true;
             });
             selectedchatbox.sort();
-            String selectedtospeak = "";
+            String selectedtospeak = "$nameaddress, \n";
             for (var word in selectedchatbox) {
               var chat = chats.where((chat) => chat['chatid'] == word).toList();
               var whattosay = "On ${chat[0]['dateofchat']} \n ";
@@ -1287,8 +1373,8 @@ class _ChatZoneState extends State<ChatZone> {
                 how: "I need a yes or no anwser only ,",
               );
               whattosay += checkques.contains("es")
-                  ? "You asked ${chat[0]['chatcontent']}"
-                  : "You said ${chat[0]['chatcontent']}";
+                  ? "You asked \n ${chat[0]['chatcontent']}. \n"
+                  : "You said  \n ${chat[0]['chatcontent']}. \n";
               if (chat[0]['respond'] != "") {
                 String response = chat[0]['respond'].replaceAll("*", "");
                 response = response.replaceAll("#", "");
@@ -1302,7 +1388,7 @@ class _ChatZoneState extends State<ChatZone> {
                     : " then I answered  $response";
                 selectedtospeak += "$whattosay \n";
               } else {
-                whattosay += " and I didn't answer due to network issues";
+                whattosay += " and I didn't answer due to network issues . \n ";
                 selectedtospeak += "$whattosay \n";
               }
             }
@@ -1345,7 +1431,7 @@ class _ChatZoneState extends State<ChatZone> {
             errormsg(context: context, error: "Item Copied");
 
             selectedchatbox = [];
-            whichactive = "msg";
+            packageview ? whichactive = "package" : whichactive = "msg";
             setState(() {});
           },
         ),
@@ -1357,7 +1443,7 @@ class _ChatZoneState extends State<ChatZone> {
           ),
           onTap: () {
             selectedchatbox = [];
-            whichactive = "msg";
+            packageview ? whichactive = "package" : whichactive = "msg";
             setState(() {});
           },
         ),
@@ -1420,63 +1506,56 @@ class _ChatZoneState extends State<ChatZone> {
                         checkingpromptdone = false;
                       });
                       if (replyactivated) {
-                        int whichid = replyid == 0 ? respondreplyid : replyid;
-                        var chat = chats
-                            .where((chat) => chat['chatid'] == whichid)
-                            .toList();
-                        String whatto = replyid == 0
-                            ? chat[0]['respond']
-                            : chat[0]['chatcontent'];
-                        String checkingstuff = await trainer(
-                          settingsProvider: settingsProvider,
-                          what:
-                              "is '${chatController.text}' referencing to ' $whatto ' ",
-                          how: "i need only a yes or no answer",
-                        );
-                        if (checkingstuff
-                            .toLowerCase()
-                            .contains("error----error-error--")) {
-                          uploadnoresponse(
-                            msg: chatController.text,
-                            replyid: replyid == 0 ? 0 : replyid,
-                            resreplyid:
-                                respondreplyid == 0 ? 0 : respondreplyid,
+                        try {
+                          String mainprompt = "";
+                          var translated = await chatController.text
+                              .translate(from: 'auto', to: 'en');
+                          mainprompt = translated.text;
+                          int whichid = replyid == 0 ? respondreplyid : replyid;
+                          var chat = chats
+                              .where((chat) => chat['chatid'] == whichid)
+                              .toList();
+                          String whatto = replyid == 0
+                              ? chat[0]['respond']
+                              : chat[0]['chatcontent'];
+                          String checkingstuff = await trainer(
+                            settingsProvider: settingsProvider,
+                            what:
+                                "is '$mainprompt' referencing to ' $whatto ' ",
+                            how: "i need only a yes or no answer",
                           );
-                        } else {
-                          if (checkingstuff.toLowerCase().contains("yes")) {
-                            checkingstuff = await Topics().usingGermini(
-                              what:
-                                  "answer '${chatController.text}' referencing to ' $whatto ' in a matured way",
+                          if (checkingstuff
+                              .toLowerCase()
+                              .contains("error----error-error--")) {
+                            uploadnoresponse(
+                              msg: mainprompt,
+                              replyid: replyid == 0 ? 0 : replyid,
+                              resreplyid:
+                                  respondreplyid == 0 ? 0 : respondreplyid,
                             );
                           } else {
-                            checkingstuff = await trainer(
-                              settingsProvider: settingsProvider,
-                              what:
-                                  "is '${chatController.text}' attempting to correct or improve ' $whatto ' ",
-                              how: "i need only a yes or no answer",
-                            );
                             if (checkingstuff.toLowerCase().contains("yes")) {
                               checkingstuff = await Topics().usingGermini(
                                 what:
-                                    "pretented as if i used '${chatController.text}' to correct and improve your knowledge based on ' $whatto ' then reply in a matured way",
+                                    "answer '$mainprompt' referencing to ' $whatto ' in a matured way, addressing me as $nameaddress",
                               );
                             } else {
                               checkingstuff = await trainer(
                                 settingsProvider: settingsProvider,
                                 what:
-                                    "is '${chatController.text}' attempting to summarize ' $whatto ' ",
+                                    "is '$mainprompt' attempting to correct or improve ' $whatto ' ",
                                 how: "i need only a yes or no answer",
                               );
                               if (checkingstuff.toLowerCase().contains("yes")) {
                                 checkingstuff = await Topics().usingGermini(
                                   what:
-                                      "pretend that you just taught me ' $whatto ' then i said '${chatController.text}'  reply to me in a matured way",
+                                      "pretented as if i used '$mainprompt' to correct and improve your knowledge based on ' $whatto ' then reply in a matured way, addressing me as $nameaddress",
                                 );
                               } else {
                                 checkingstuff = await trainer(
                                   settingsProvider: settingsProvider,
                                   what:
-                                      "is '${chatController.text}' attempting to give feedback on ' $whatto ' ",
+                                      "is '$mainprompt' attempting to summarize ' $whatto ' ",
                                   how: "i need only a yes or no answer",
                                 );
                                 if (checkingstuff
@@ -1484,13 +1563,13 @@ class _ChatZoneState extends State<ChatZone> {
                                     .contains("yes")) {
                                   checkingstuff = await Topics().usingGermini(
                                     what:
-                                        "pretend that you just recieved '${chatController.text}' as feedback regarding to ' $whatto ' and reply  in a matured way",
+                                        "pretend that you just taught me ' $whatto ' then i said '$mainprompt'  reply to me in a matured way, addressing me as $nameaddress",
                                   );
                                 } else {
                                   checkingstuff = await trainer(
                                     settingsProvider: settingsProvider,
                                     what:
-                                        "is '${chatController.text}' attempting to express curiosity on ' $whatto ' ",
+                                        "is '$mainprompt' attempting to give feedback on ' $whatto ' ",
                                     how: "i need only a yes or no answer",
                                   );
                                   if (checkingstuff
@@ -1498,13 +1577,13 @@ class _ChatZoneState extends State<ChatZone> {
                                       .contains("yes")) {
                                     checkingstuff = await Topics().usingGermini(
                                       what:
-                                          "someone is expressing curiosity by telling you '${chatController.text}' regarding to ' $whatto ' reply in a matured way",
+                                          "pretend that you just recieved '$mainprompt' as feedback regarding to ' $whatto ' and reply  in a matured way, addressing me as $nameaddress",
                                     );
                                   } else {
                                     checkingstuff = await trainer(
                                       settingsProvider: settingsProvider,
                                       what:
-                                          "is '${chatController.text}' telling you that you forgot to say something about ' $whatto ' ",
+                                          "is '$mainprompt' attempting to express curiosity on ' $whatto ' ",
                                       how: "i need only a yes or no answer",
                                     );
                                     if (checkingstuff
@@ -1513,13 +1592,13 @@ class _ChatZoneState extends State<ChatZone> {
                                       checkingstuff =
                                           await Topics().usingGermini(
                                         what:
-                                            "pretend as if you forgot to tell me about ' $whatto ' then reply in a matured way",
+                                            "someone is expressing curiosity by telling you '$mainprompt' regarding to ' $whatto ' reply in a matured way, addressing me as $nameaddress",
                                       );
                                     } else {
                                       checkingstuff = await trainer(
                                         settingsProvider: settingsProvider,
                                         what:
-                                            "is '${chatController.text}' telling you that it is confused or need more clarifications on ' $whatto ' ",
+                                            "is '$mainprompt' telling you that you forgot to say something about ' $whatto ' ",
                                         how: "i need only a yes or no answer",
                                       );
                                       if (checkingstuff
@@ -1528,37 +1607,71 @@ class _ChatZoneState extends State<ChatZone> {
                                         checkingstuff =
                                             await Topics().usingGermini(
                                           what:
-                                              "someone needs your help by asking you '${chatController.text}' regarding to ' $whatto ' reply in a matured way",
+                                              "pretend as if you forgot to tell me about ' $whatto ' then reply in a matured way, addressing me as $nameaddress",
                                         );
                                       } else {
-                                        checkingstuff =
-                                            await Topics().usingGermini(
-                                          what: chatController.text,
+                                        checkingstuff = await trainer(
+                                          settingsProvider: settingsProvider,
+                                          what:
+                                              "is '$mainprompt' telling you that it is confused or need more clarifications on ' $whatto ' ",
+                                          how: "i need only a yes or no answer",
                                         );
+                                        if (checkingstuff
+                                            .toLowerCase()
+                                            .contains("yes")) {
+                                          checkingstuff =
+                                              await Topics().usingGermini(
+                                            what:
+                                                "someone needs your help by asking you '$mainprompt' regarding to ' $whatto ' reply in a matured way, addressing me as $nameaddress",
+                                          );
+                                        } else {
+                                          checkingstuff =
+                                              await Topics().usingGermini(
+                                            what: "answer this : '$mainprompt' addressing me as $nameaddress",
+                                          );
+                                        }
                                       }
                                     }
                                   }
                                 }
                               }
                             }
+                            if (!checkingstuff.contains("Error")) {
+                              var translated = await checkingstuff.translate(
+                                  to: settingsProvider.settings.language);
+                              checkingstuff = translated.text;
+                              uploadwithresponse(
+                                msg: chatController.text,
+                                replyid: replyid == 0 ? 0 : replyid,
+                                resreplyid:
+                                    respondreplyid == 0 ? 0 : respondreplyid,
+                                response: checkingstuff,
+                              );
+                            } else {
+                              uploadnoresponse(
+                                msg: chatController.text,
+                                replyid: replyid,
+                                resreplyid: respondreplyid,
+                              );
+                            }
                           }
-                          uploadwithresponse(
+                          replyid = 0;
+                          response = "";
+                          respondreplyid = 0;
+                          replyactivated = false;
+                        } on Exception {
+                          uploadnoresponse(
                             msg: chatController.text,
-                            replyid: replyid == 0 ? 0 : replyid,
-                            resreplyid:
-                                respondreplyid == 0 ? 0 : respondreplyid,
-                            response: checkingstuff,
+                            replyid: replyid,
+                            resreplyid: respondreplyid,
                           );
                         }
-                        replyid = 0;
-                        response = "";
-                        respondreplyid = 0;
-                        replyactivated = false;
                       } else {
                         await upLoadingChat(settingsProvider: settingsProvider);
                       }
                       chatController.text = "";
                       checkingpromptdone = true;
+                      endreachedinscrol = true;
                       setState(() {});
                     }
                   },
@@ -1751,8 +1864,14 @@ class _ChatZoneState extends State<ChatZone> {
           ),
         ),
         IconButton(
-            onPressed: () {},
-            icon: const Icon(CupertinoIcons.envelope_open_fill))
+          onPressed: () {
+            selectedchatbox = [chatid];
+            showpackagedialog();
+          },
+          icon: const Icon(
+            CupertinoIcons.envelope_open_fill,
+          ),
+        )
       ],
     );
   }
@@ -1967,81 +2086,6 @@ class _ChatZoneState extends State<ChatZone> {
         'lib/assets/typing.json',
         height: 20,
         fit: BoxFit.contain,
-      ),
-    );
-  }
-
-  Widget packagerdesign() {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: () {},
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          margin: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: Theme.of(context).hoverColor,
-            borderRadius: const BorderRadius.only(
-              topRight: Radius.circular(30),
-              bottomRight: Radius.circular(30),
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Row(
-                    children: [
-                      Icon(CupertinoIcons.envelope_fill),
-                      Text("    Packaged in"),
-                    ],
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (context) {
-                          return AlertDialog(
-                            title: const Text('Extract Package ?'),
-                            content: const Text(
-                                "Extract this content from title of package"),
-                            actions: [
-                              TextButton(
-                                child: const Text('Cancel'),
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                              ),
-                              TextButton(
-                                child: const Text('Proceed'),
-                                onPressed: () {
-                                  //extract function
-                                },
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    },
-                    icon: const Icon(CupertinoIcons.tray_arrow_up_fill),
-                  ),
-                ],
-              ),
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 7),
-                child: Text(
-                  "Title of package here",
-                  style: TextStyle(fontSize: 18),
-                ),
-              ),
-              const Text(
-                "Date time for chat",
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -2275,13 +2319,13 @@ class _ChatZoneState extends State<ChatZone> {
       );
       if (response.toLowerCase().contains("yes")) {
         response = await Topics().usingGermini(
-          what: mainprompt,
+           what: "answer this : '$mainprompt' addressing me as $nameaddress"
         );
         response +=
             "\n **If you are replying to any chat click on its reply button to be specific**";
       } else {
         response = await Topics().usingGermini(
-          what: mainprompt,
+           what: "answer this : '$mainprompt' addressing me as $nameaddress"
         );
       }
 
@@ -2327,7 +2371,7 @@ class _ChatZoneState extends State<ChatZone> {
       var translated = await what.translate(from: 'auto', to: 'en');
       mainprompt = how + translated.text;
       response = await Topics().usingGermini(
-        what: mainprompt,
+         what: "answer this : '$mainprompt' addressing me as $nameaddress"
       );
       if (!response.contains("Error")) {
         var translated =
@@ -2385,6 +2429,231 @@ class _ChatZoneState extends State<ChatZone> {
                 await _deleteChat(chatid);
                 Navigator.pop(context);
               },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  AppBar appbar() {
+    return AppBar(
+      leading: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: () => Navigator.of(context).pop(),
+          child: const Icon(Icons.chevron_left),
+        ),
+      ),
+      title: Row(
+        children: [
+          _userData != null && _userData!.imagePath.isNotEmpty
+              ? Image.file(File(_userData!.imagePath), height: 60, width: 60)
+              : Image.asset(
+                  "lib/assets/new degreen ic.png",
+                  width: 60,
+                  height: 60,
+                ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(_userData != null ? _userData!.name : "Degreen"),
+              Text(
+                _status,
+                style: const TextStyle(fontSize: 12),
+              ),
+            ],
+          ),
+        ],
+      ),
+      actions: [
+        IconButton(
+          onPressed: () {
+            XFile? imageFile;
+            if (_userData != null) {
+              usernameController.text = _userData!.name;
+            }
+
+            showDialog(
+              context: context,
+              builder: (context) => SimpleDialog(
+                title: const Text("Settings"),
+                contentPadding: const EdgeInsets.all(12),
+                children: [
+                  Center(
+                    child: Stack(
+                      children: [
+                        Container(
+                          width: 110,
+                          height: 110,
+                          decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(300),
+                              color: Theme.of(context).hoverColor),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(300),
+                            child: Center(
+                              child: imageFile != null
+                                  ? Image.file(File(imageFile!.path),
+                                      height: 100, width: 100)
+                                  : Image.asset(
+                                      "lib/assets/new degreen ic.png",
+                                      width: 100,
+                                      height: 100,
+                                      fit: BoxFit.contain,
+                                    ),
+                            ),
+                          ),
+                        ),
+                        IconButton.filled(
+                          onPressed: () async {
+                            imageFile = await _picker.pickImage(
+                                source: ImageSource.gallery);
+                            setState(() {});
+                          },
+                          icon: const Icon(Icons.edit),
+                        )
+                      ],
+                    ),
+                  ),
+                  const Divider(
+                    height: 40,
+                    endIndent: 10,
+                    indent: 10,
+                    thickness: 2,
+                  ),
+                  TextField(
+                    controller: usernameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Can I Call You',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(
+                          Radius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  CupertinoButton.filled(
+                    child: const Text("submit"),
+                    onPressed: () async {
+                      if (usernameController.text.isNotEmpty) {
+                        final directory =
+                            await getApplicationDocumentsDirectory();
+                        String imagePath = _userData?.imagePath ?? '';
+                        if (imageFile != null) {
+                          imagePath = '${directory.path}/${imageFile!.name}';
+                          await imageFile!.saveTo(imagePath);
+                        }
+
+                        final userData = UserData(
+                          name: usernameController.text,
+                          imagePath: imagePath,
+                        );
+
+                        final file = File('${directory.path}/user_data.json');
+                        await file.writeAsString(jsonEncode(userData.toJson()));
+
+                        setState(() {
+                          _userData = userData;
+                        });
+
+                        Navigator.of(context).pop();
+                      }
+                    },
+                  ),
+                ],
+              ),
+            );
+          },
+          icon: const Icon(Icons.settings_rounded),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(right: 18),
+          child: IconButton(
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: Text(chatsandpackages.length > 1
+                        ? 'Delete Chats ?'
+                        : 'Delete Chat ?'),
+                    content: Text(chatsandpackages.length > 1
+                        ? "This will delete the sent and responds of all these chats"
+                        : "This will delete the sent and responds of this chat"),
+                    actions: [
+                      TextButton(
+                        child: const Text('Cancel'),
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                      ),
+                      TextButton(
+                        child: const Text('Proceed'),
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          await clearAllChats();
+                          chatsandpackages = [];
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
+              setState(() {});
+            },
+            icon: const Icon(Icons.delete),
+          ),
+        )
+      ],
+    );
+  }
+
+  void showpackagedialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Select or Create Package'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (packages.isNotEmpty) ...[
+                const Text('Select Existing Package:'),
+                ...packages.map((package) {
+                  return ListTile(
+                    title: Text(package['title']),
+                    onTap: () {
+                      _updatePackage(package);
+                      Navigator.pop(context);
+                    },
+                  );
+                }),
+                const Divider(),
+              ],
+              TextField(
+                controller: packageTitleController,
+                decoration:
+                    const InputDecoration(labelText: 'New Package Title'),
+              ),
+            ],
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                if (packageTitleController.text.isEmpty) {
+                  errormsg(
+                    context: context,
+                    error: "Title Is Required",
+                  );
+                } else {
+                  _createNewPackage(packageTitleController.text);
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('Create Package'),
             ),
           ],
         );
