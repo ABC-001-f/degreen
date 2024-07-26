@@ -93,7 +93,7 @@ flutter:
  
 flutter_native_splash:
   color: "#ffffff"
-
+  fullscreen: true
   image: lib/assets/degreen icon.png
 
   android_12:
