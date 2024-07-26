@@ -82,9 +82,13 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-            builder: (context) => const ChatZone(reply: '',),
-          )),
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const ChatZone(
+                reply: '',
+              ),
+            ),
+          ),
           icon: const Icon(Icons.chat_rounded),
         ),
         title: const Text('De Green'),

@@ -101,6 +101,8 @@ class _ChatZoneState extends State<ChatZone> {
       loadingspeachall = false,
       isSpeaking = false;
   UserData? _userData;
+  XFile? imageFile;
+  File? _imageFile;
   final ImagePicker _picker = ImagePicker();
   @override
   void initState() {
@@ -109,6 +111,7 @@ class _ChatZoneState extends State<ChatZone> {
     _loadChats(del: false);
     _loadContent();
     _loadUserData();
+
     _searchFocusNode.addListener(_handleSearchFocus);
     searchinController.addListener(filterItems);
   }
@@ -130,6 +133,7 @@ class _ChatZoneState extends State<ChatZone> {
       final Map<String, dynamic> data = jsonDecode(jsonData);
       setState(() {
         _userData = UserData.fromJson(data);
+        nameaddress = _userData != null ? _userData!.name : "Sir";
       });
     }
   }
@@ -1627,7 +1631,8 @@ class _ChatZoneState extends State<ChatZone> {
                                         } else {
                                           checkingstuff =
                                               await Topics().usingGermini(
-                                            what: "answer this : '$mainprompt' addressing me as $nameaddress",
+                                            what:
+                                                "answer this : '$mainprompt' addressing me as $nameaddress",
                                           );
                                         }
                                       }
@@ -2319,14 +2324,12 @@ class _ChatZoneState extends State<ChatZone> {
       );
       if (response.toLowerCase().contains("yes")) {
         response = await Topics().usingGermini(
-           what: "answer this : '$mainprompt' addressing me as $nameaddress"
-        );
+            what: "answer this : '$mainprompt' addressing me as $nameaddress");
         response +=
             "\n **If you are replying to any chat click on its reply button to be specific**";
       } else {
         response = await Topics().usingGermini(
-           what: "answer this : '$mainprompt' addressing me as $nameaddress"
-        );
+            what: "answer this : '$mainprompt' addressing me as $nameaddress");
       }
 
       if (!response.contains("Error")) {
@@ -2371,8 +2374,7 @@ class _ChatZoneState extends State<ChatZone> {
       var translated = await what.translate(from: 'auto', to: 'en');
       mainprompt = how + translated.text;
       response = await Topics().usingGermini(
-         what: "answer this : '$mainprompt' addressing me as $nameaddress"
-      );
+          what: "answer this : '$mainprompt' addressing me as $nameaddress");
       if (!response.contains("Error")) {
         var translated =
             await response.translate(to: settingsProvider.settings.language);
@@ -2447,17 +2449,27 @@ class _ChatZoneState extends State<ChatZone> {
       ),
       title: Row(
         children: [
-          _userData != null && _userData!.imagePath.isNotEmpty
-              ? Image.file(File(_userData!.imagePath), height: 60, width: 60)
-              : Image.asset(
-                  "lib/assets/new degreen ic.png",
-                  width: 60,
-                  height: 60,
-                ),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(300),
+            child: _userData != null && _userData!.imagePath.isNotEmpty
+                ? Image.file(
+                    File(_userData!.imagePath),
+                    height: 40,
+                    width: 40,
+                    fit: BoxFit.cover,
+                  )
+                : Image.asset(
+                    "lib/assets/new degreen ic.png",
+                    width: 60,
+                    height: 60,
+                    fit: BoxFit.cover,
+                  ),
+          ),
+          const SizedBox(width: 12,),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(_userData != null ? _userData!.name : "Degreen"),
+              const Text("Degreen"),
               Text(
                 _status,
                 style: const TextStyle(fontSize: 12),
@@ -2469,101 +2481,122 @@ class _ChatZoneState extends State<ChatZone> {
       actions: [
         IconButton(
           onPressed: () {
-            XFile? imageFile;
             if (_userData != null) {
               usernameController.text = _userData!.name;
             }
 
             showDialog(
               context: context,
-              builder: (context) => SimpleDialog(
-                title: const Text("Settings"),
-                contentPadding: const EdgeInsets.all(12),
-                children: [
-                  Center(
-                    child: Stack(
-                      children: [
-                        Container(
-                          width: 110,
-                          height: 110,
-                          decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(300),
-                              color: Theme.of(context).hoverColor),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(300),
-                            child: Center(
-                              child: imageFile != null
-                                  ? Image.file(File(imageFile!.path),
-                                      height: 100, width: 100)
-                                  : Image.asset(
-                                      "lib/assets/new degreen ic.png",
-                                      width: 100,
-                                      height: 100,
-                                      fit: BoxFit.contain,
-                                    ),
+              builder: (context) => StatefulBuilder(
+                builder: (BuildContext context, StateSetter setState) {
+                  return SimpleDialog(
+                    title: const Text("Settings"),
+                    contentPadding: const EdgeInsets.all(12),
+                    children: [
+                      Center(
+                        child: Stack(
+                          children: [
+                            Container(
+                              width: 110,
+                              height: 110,
+                              decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(300),
+                                  color: Theme.of(context).hoverColor),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(300),
+                                child: Center(
+                                  child: imageFile != null
+                                      ? Image.file(
+                                          _imageFile!,
+                                          height: 200,
+                                          width: 200,
+                                          fit: BoxFit.cover,
+                                        )
+                                      : _userData != null &&
+                                              _userData!.imagePath.isNotEmpty
+                                          ? Image.file(
+                                              File(_userData!.imagePath),
+                                              height: 200,
+                                              width: 200,
+                                              fit: BoxFit.cover,
+                                            )
+                                          : Image.asset(
+                                              "lib/assets/new degreen ic.png",
+                                              width: 100,
+                                              height: 100,
+                                              fit: BoxFit.cover,
+                                            ),
+                                ),
+                              ),
+                            ),
+                            IconButton.filled(
+                              onPressed: () async {
+                                imageFile = await _picker.pickImage(
+                                  source: ImageSource.gallery,
+                                );
+                                if (imageFile != null) {
+                                  setState(() {
+                                    _imageFile = File(imageFile!.path);
+                                  });
+                                }
+                                setState(() {});
+                              },
+                              icon: const Icon(Icons.edit),
+                            )
+                          ],
+                        ),
+                      ),
+                      const Divider(
+                        height: 40,
+                        endIndent: 10,
+                        indent: 10,
+                        thickness: 2,
+                      ),
+                      TextField(
+                        controller: usernameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Can I Call You',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(
+                              Radius.circular(10),
                             ),
                           ),
                         ),
-                        IconButton.filled(
-                          onPressed: () async {
-                            imageFile = await _picker.pickImage(
-                                source: ImageSource.gallery);
-                            setState(() {});
-                          },
-                          icon: const Icon(Icons.edit),
-                        )
-                      ],
-                    ),
-                  ),
-                  const Divider(
-                    height: 40,
-                    endIndent: 10,
-                    indent: 10,
-                    thickness: 2,
-                  ),
-                  TextField(
-                    controller: usernameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Can I Call You',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(
-                          Radius.circular(10),
-                        ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 20,
-                  ),
-                  CupertinoButton.filled(
-                    child: const Text("submit"),
-                    onPressed: () async {
-                      if (usernameController.text.isNotEmpty) {
-                        final directory =
-                            await getApplicationDocumentsDirectory();
-                        String imagePath = _userData?.imagePath ?? '';
-                        if (imageFile != null) {
-                          imagePath = '${directory.path}/${imageFile!.name}';
-                          await imageFile!.saveTo(imagePath);
-                        }
-
-                        final userData = UserData(
-                          name: usernameController.text,
-                          imagePath: imagePath,
-                        );
-
-                        final file = File('${directory.path}/user_data.json');
-                        await file.writeAsString(jsonEncode(userData.toJson()));
-
-                        setState(() {
-                          _userData = userData;
-                        });
-
-                        Navigator.of(context).pop();
-                      }
-                    },
-                  ),
-                ],
+                      const SizedBox(
+                        height: 20,
+                      ),
+                      CupertinoButton.filled(
+                        child: const Text("submit"),
+                        onPressed: () async {
+                          if (usernameController.text.isNotEmpty) {
+                            final directory =
+                                await getApplicationDocumentsDirectory();
+                            String imagePath = _userData?.imagePath ?? '';
+                            if (imageFile != null) {
+                              imagePath = '${directory.path}/${imageFile!.name}';
+                              await imageFile!.saveTo(imagePath);
+                            }
+                  
+                            final userData = UserData(
+                              name: usernameController.text,
+                              imagePath: imagePath,
+                            );
+                  
+                            final file = File('${directory.path}/user_data.json');
+                            await file.writeAsString(jsonEncode(userData.toJson()));
+                  
+                            setState(() {
+                              _userData = userData;
+                            });
+                  
+                            Navigator.of(context).pop();
+                          }
+                        },
+                      ),
+                    ],
+                  );
+                }
               ),
             );
           },

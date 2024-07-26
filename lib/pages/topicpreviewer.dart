@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:degreen/pages/chatzone.dart';
 import 'package:degreen/topics.dart';
 import 'package:degreen/utils/content.dart';
 import 'package:degreen/utils/itembox.dart';
@@ -510,15 +511,16 @@ class _TopicpreviewerState extends State<Topicpreviewer> {
                                           ],
                                         ),
                                       ),
-                                      Container(
-                                        padding: const EdgeInsets.all(12),
-                                        decoration: BoxDecoration(
-                                          borderRadius:
-                                              BorderRadius.circular(12),
+                                      IconButton(
+                                        onPressed: () =>
+                                            Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (context) => ChatZone(
+                                              reply: selectedText,
+                                            ),
+                                          ),
                                         ),
-                                        child: Image.asset(
-                                          "lib/assets/new degreen ic.png",
-                                        ),
+                                        icon: const Icon(Icons.chat_rounded),
                                       ),
                                       Builder(builder: (context) {
                                         return IconButton(
