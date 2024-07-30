@@ -95,7 +95,7 @@ class _ChatZoneState extends State<ChatZone> {
       replyactivated = false,
       activesearch = false,
       activesend = false,
-      tophide = false,
+      tophide = true,
       packageview = false,
       checkingpromptdone = true,
       endreachedinscrol = false,
@@ -362,6 +362,7 @@ class _ChatZoneState extends State<ChatZone> {
         curve: Curves.easeOut,
       );
     }
+    tophide = true;
     setState(() {});
   }
 
@@ -481,7 +482,7 @@ class _ChatZoneState extends State<ChatZone> {
               ? appbar()
               : const PreferredSize(
                   preferredSize: Size(double.infinity, 1),
-                  child: SizedBox(),
+                  child: SizedBox(height: 20),
                 )
           : appbar(),
       endDrawer: Drawer(
@@ -857,6 +858,8 @@ class _ChatZoneState extends State<ChatZone> {
                                                     ),
                                               IconButton(
                                                 onPressed: () {
+                                                  respondreplyid = 0;
+                                                  replyid = 0;
                                                   replyactivated = false;
                                                   replyingcontent = "";
                                                   explainext = "";
@@ -870,7 +873,7 @@ class _ChatZoneState extends State<ChatZone> {
                                           ConstrainedBox(
                                             constraints: const BoxConstraints(
                                               minHeight: 10,
-                                              maxHeight: 150,
+                                              maxHeight: 100,
                                             ),
                                             child: Container(
                                               padding: const EdgeInsets.all(12),
@@ -1727,7 +1730,7 @@ class _ChatZoneState extends State<ChatZone> {
               Row(
                 children: [
                   Expanded(
-                    flex: 3,
+                    flex: 4,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -1829,6 +1832,7 @@ class _ChatZoneState extends State<ChatZone> {
                       replyingcontent = msgcontent;
                       replyid = 0;
                       explainext = "";
+                      tophide = true;
                       setState(() {});
                     },
                     icon: const Icon(
@@ -1921,7 +1925,7 @@ class _ChatZoneState extends State<ChatZone> {
           children: [
             const Expanded(flex: 1, child: SizedBox()),
             Expanded(
-              flex: 3,
+              flex: 4,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -2021,12 +2025,13 @@ class _ChatZoneState extends State<ChatZone> {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       IconButton(
-                        onPressed: () async {
+                        onPressed: () {
                           respondreplyid = 0;
                           replyactivated = true;
                           replyingcontent = msgcontent;
                           replyid = chatid;
                           explainext = "";
+                          tophide = true;
                           setState(() {});
                         },
                         icon: const Icon(
@@ -2337,33 +2342,8 @@ class _ChatZoneState extends State<ChatZone> {
       var translated =
           await chatController.text.translate(from: 'auto', to: 'en');
       mainprompt = translated.text;
-      response = await trainer(
-        settingsProvider: settingsProvider,
-        what:
-            "is '$mainprompt' referencing a previous conversation or attempting to correct / improve a previous response?",
-        how: "i need only a yes or no answer",
-      );
-
-      if (response.toLowerCase().contains("yes")) {
-        if (explainext == "") {
-          response = await Topics().usingGermini(
-              what:
-                  "answer this : '$mainprompt' addressing me as $nameaddress");
-          response +=
-              "\n **If you are replying to any chat click on its reply button to be specific**";
-        } else {
-          var translatedexpl =
-              await explainext.translate(from: 'auto', to: 'en');
-          explainext = translatedexpl.text;
-          response = await Topics().usingGermini(
-            what:
-                "I needs your help by asking you '$mainprompt' regarding to ' $explainext ' reply in a matured way, addressing me as $nameaddress",
-          );
-        }
-      } else {
-        response = await Topics().usingGermini(
-            what: "answer this : '$mainprompt' addressing me as $nameaddress");
-      }
+      response = await Topics().usingGermini(
+          what: "answer this : '$mainprompt' addressing me as $nameaddress");
 
       if (!response.contains("Error")) {
         var translated =
